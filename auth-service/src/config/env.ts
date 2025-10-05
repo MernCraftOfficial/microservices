@@ -14,6 +14,7 @@ interface Env {
   COOKIE_KEYS: {
     jwt_token: string;
     crypto_token: string;
+    otp_verified: string;
   };
   REDIS_KEY_PREFIX: {
     account_verfication: string;

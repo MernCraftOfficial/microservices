@@ -2,12 +2,6 @@ import { Schema, model, Document } from 'mongoose';
 import bcrypt from 'bcrypt';
 import env from '../config/env';
 
-// Interface representing a Group subdocument
-interface Group {
-  group: Schema.Types.ObjectId;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'MEMBER' | 'GUEST';
-}
-
 export type Username = { firstname: string; lastname?: string };
 
 // Interface representing a User document
@@ -18,7 +12,6 @@ export interface IUser extends Document {
   profilePictureUrl: string;
   role?: 'ADMIN' | 'USER';
   status: 'INACTIVE' | 'ACTIVE' | 'BUSY';
-  groups: Group[];
   lastSeen?: Date;
   language?: string;
   isVerified: boolean;
@@ -51,18 +44,6 @@ const UserSchema = new Schema<IUser>(
       uppercase: true,
       default: 'INACTIVE',
     },
-    groups: [
-      {
-        group: { type: Schema.Types.ObjectId, ref: 'Group', required: true },
-        role: {
-          type: String,
-          enum: ['ADMIN', 'MEMBER', 'GUEST'],
-          required: true,
-          uppercase: true,
-          default: 'GUEST',
-        },
-      },
-    ],
     lastSeen: { type: Date, default: Date.now },
     language: { type: String, default: 'en' },
     isVerified: { type: Boolean, default: false },

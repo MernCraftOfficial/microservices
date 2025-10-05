@@ -2,9 +2,9 @@ import express, { Express } from 'express';
 import cors from 'cors';
 import { urlencoded, json } from 'express';
 import userRoute from '../routes/userRoute';
+import cookiParser from 'cookie-parser';
 import env from './env';
 import pageNotFound from './404';
-import { Request, Response, NextFunction } from 'express';
 import { syntaxErrorHandler } from '../middleware/errorHandlerMiddleware';
 
 let app: null | Express = null;
@@ -18,7 +18,13 @@ export function getExpressApp() {
 
 export function includeExpressMiddleware(app: Express) {
   //body parser
-  app.use(cors());
+  app.use(
+    cors({
+      origin: 'http://localhost:3000', // your Next.js frontend
+      credentials: true,
+    }),
+  );
+  app.use(cookiParser());
   app.use(urlencoded({ extended: false }));
   app.use(json());
   app.use(syntaxErrorHandler);

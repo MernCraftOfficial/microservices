@@ -1,13 +1,19 @@
 import jwt from 'jsonwebtoken';
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import env from '../config/env';
 import response from '../helper/responseHelper';
 import { retrieveJwtToken } from '../helper/commonHelper';
-
-const authenticate = (req: Request, res: Response, next: NextFunction) => {
+import { JwtRequest } from '../types/commonTypes';
+const authenticate = (req: JwtRequest, res: Response, next: NextFunction) => {
   //get the user from jwt and add id to req object
   try {
-    const token = retrieveJwtToken(req?.header('authorization'));
+    let token = retrieveJwtToken(req?.header('authorization'));
+    const cookieKey = env.COOKIE_KEYS.jwt_token;
+
+    if (!token && req?.cookies) {
+      token = req?.cookies[cookieKey];
+    }
+
     if (!token) {
       response.sendErrorResponse(
         res,
@@ -24,7 +30,7 @@ const authenticate = (req: Request, res: Response, next: NextFunction) => {
       return;
     }
 
-    req.body.user = userData;
+    req.user = userData;
     next();
   } catch (error: any) {
     response.sendServerError(res, 'INTERNAL_SERVER_ERROR', error.message);

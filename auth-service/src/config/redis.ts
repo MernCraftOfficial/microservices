@@ -70,7 +70,7 @@ export async function setRedisKey(
 ) {
   const redis = getRedisClient();
   redis.set(key, value);
-  console.log(redis);
+  redis;
 }
 
 export async function getRedisKey(key: RedisKey) {
@@ -85,15 +85,19 @@ export async function setRedisExpiry(key: RedisKey, seconds: number = 1800) {
   return true;
 }
 
-export async function destroyRediskey(key: RedisKey) {
-  const redis = getRedisClient();
-  await redis.del(key);
-  return true;
+export async function destroyRediskey(key: RedisKey | undefined) {
+  if (key) {
+    const redis = getRedisClient();
+    await redis.del(key);
+    return true;
+  }
 }
 
 export async function updateRediskey(
-  key: RedisKey,
+  key: RedisKey | undefined,
   value: string | Buffer | number,
 ) {
-  setRedisKey(key, value);
+  if (key) {
+    setRedisKey(key, value);
+  }
 }
