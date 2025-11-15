@@ -13,6 +13,7 @@ import { clearCookies, setCookie, unsetCookie } from '../helper/cookieHelper';
 import env from '../config/env';
 import { destroyRediskey } from '../config/redis';
 import { CryptoRequest, JwtRequest } from '../types/commonTypes';
+import logger from '../config/winston';
 
 export const signin = tryCatchErrorHandler(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -107,7 +108,7 @@ export const verifyAccount = tryCatchErrorHandler(
     const isVerified = await User.findByIdAndUpdate(
       user?._id,
       { $set: { isVerified: true } },
-      { new: true },
+      { new: true, runValidators: true },
     );
 
     if (!isVerified) {
@@ -134,7 +135,7 @@ export const forgotPassword = tryCatchErrorHandler(
       isVerified: true,
     }).select('_id username');
 
-    const userId = isUserExist?._id?.toString();
+    const userId = isUserExist?._id?.toString() ?? '';
 
     if (!isUserExist || !userId) {
       response.sendErrorResponse(
@@ -337,6 +338,45 @@ export const getMe = tryCatchErrorHandler(
       response.sendSuccessResponse(res, 'OK', getUser);
       return;
     } catch (error: any) {
+      response.sendErrorResponse(res, 'BAD_REQUEST', error.message);
+      return;
+    }
+  },
+);
+
+export const getUsersDataByIds = tryCatchErrorHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userIds = req?.query?.ids;
+
+    if (!userIds) {
+      response.sendErrorResponse(
+        res,
+        'BAD_REQUEST',
+        'Please provide user ids!',
+      );
+      return;
+    }
+
+    const userIdsArray = userIds.toString().split(',');
+
+    try {
+      const users = await User.find({
+        _id: { $in: userIdsArray },
+      }).select('-password -__v');
+
+      if (!users) {
+        response.sendErrorResponse(
+          res,
+          'NOT_FOUND',
+          'Users are not registered with us!',
+        );
+        return;
+      }
+
+      response.sendSuccessResponse(res, 'OK', users);
+      return;
+    } catch (error: any) {
+      logger.error(error);
       response.sendErrorResponse(res, 'BAD_REQUEST', error.message);
       return;
     }

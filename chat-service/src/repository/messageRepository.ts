@@ -1,0 +1,100 @@
+import mongoose from 'mongoose';
+import { Message } from '../model/Message';
+
+export const createMessage = async (data: any) => {
+  const message = {
+    content: data?.content,
+    sender: data?.sender,
+    receiver: data?.receiver,
+    messageStatus: data?.messageStatus,
+    messageType: data?.messaageType,
+    createdAt: data?.createdAt,
+    updatedAt: data?.updatedAt,
+  };
+
+  const newMessage = await Message.create(message);
+  const messageId = newMessage?._id?.toString();
+
+  if (!newMessage || !messageId) {
+    return false;
+  }
+
+  return newMessage;
+};
+
+export const updateMessage = async (data: any) => {
+  const { _id = null, dataToUpdate = {} } = data;
+  let { receivedAt = new Date().toISOString(), messageStatus = null } =
+    dataToUpdate;
+  dataToUpdate.updatedAt = new Date().toISOString();
+
+  if (messageStatus == null) {
+    delete dataToUpdate.messageStatus;
+  }
+
+  const updateMessage = await Message.updateOne(
+    { _id: _id },
+    { $set: { ...dataToUpdate, receivedAt } },
+    { runValidators: true },
+  );
+
+  if (!updateMessage || updateMessage?.matchedCount == 0) {
+    return false;
+  }
+
+  return updateMessage;
+};
+
+export const getMessages = async (data: any) => {
+  const { sender = null, receiver = null, limit = 50, page = 0 } = data;
+
+  const messages = await Message.find({ sender, receiver })
+    .sort({ createdAt: -1 })
+    .skip(page * limit)
+    .limit(limit);
+
+  if (!messages) {
+    return false;
+  }
+
+  return messages;
+};
+
+export const deleteMessageById = async ({
+  _id,
+  sender,
+}: {
+  _id: string;
+  sender: string;
+}) => {
+  const deletedMessage = await Message.deleteOne({ _id, sender });
+
+  if (!deletedMessage || deletedMessage?.deletedCount == 0) {
+    return false;
+  }
+
+  return deletedMessage;
+};
+
+export const deleteWholeChat = async ({
+  sender,
+  receiver,
+}: {
+  sender: string;
+  receiver: string;
+}) => {
+  const deletedChat = await Message.deleteMany({ sender, receiver });
+  if (!deletedChat || deletedChat?.deletedCount == 0) {
+    return false;
+  }
+
+  return deletedChat;
+};
+
+export default {
+  createMessage,
+  updateMessage,
+  getMessages,
+  deleteMessageById,
+  deleteWholeChat,
+};
