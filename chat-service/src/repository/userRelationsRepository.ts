@@ -78,12 +78,12 @@ export const getUserRelations = async (data: any) => {
     status = null,
   } = data;
 
-  if (!relationType || !userId) {
+  if (!userId) {
     return false;
   }
 
   const userRelations = await UserRelations.find({
-    relationType,
+    ...(relationType ? { relationType } : {}),
     userId,
     ...(status ? { status } : {}),
   })

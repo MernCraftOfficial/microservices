@@ -1,34 +1,39 @@
 import express, { NextFunction, Request, Response } from "express";
-
-const { createProxyMiddleware } = require("http-proxy-middleware");
+import { createProxyMiddleware } from "http-proxy-middleware";
 
 const app = express();
 
 // Authentication layer
-app.use((req: Request, res: Response, next: NextFunction) => {
-  if (req.path.startsWith("/auth")) return next(); // open routes
+// app.use((req: Request, res: Response, next: NextFunction) => {
+//   if (req.path.startsWith("/auth")) return next(); // open routes
 
-  const token = req.headers.authorization;
-  if (!token) return res.status(401).json({ message: "Unauthorized" });
+//   const token = req.headers.authorization;
+//   if (!token) return res.status(401).json({ message: "Unauthorized" });
 
-  next();
-});
+//   next();
+// });
 
 // Gateway → Forward to NGINX (not directly to microservices)
 app.use(
-  "/chat",
+  "/user",
   createProxyMiddleware({
-    target: "http://localhost", // nginx will be running on port 80
+    target: "http://localhost:5001",
     changeOrigin: true,
+    pathRewrite: {
+      "/": "/user/",
+    },
   })
 );
 
 app.use(
-  "/auth",
+  "/chat",
   createProxyMiddleware({
-    target: "http://localhost",
+    target: "http://localhost:5002", // nginx will be running on port 80
     changeOrigin: true,
+    pathRewrite: {
+      "/": "/chat/",
+    },
   })
 );
 
-app.listen(3000, () => console.log("API Gateway running on port 3000"));
+app.listen(5000, () => console.log("API Gateway running on port 5000"));

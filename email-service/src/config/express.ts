@@ -1,11 +1,9 @@
 import express, { Express } from 'express';
 import cors from 'cors';
 import { urlencoded, json } from 'express';
-import userRoute from '../routes/userRoute';
-import cookiParser from 'cookie-parser';
 import env from './env';
 import pageNotFound from './404';
-import { syntaxErrorHandler } from '../middleware/errorHandlerMiddleware';
+import emailRoute from '../routes/emailRoute';
 
 let app: null | Express = null;
 export function getExpressApp() {
@@ -24,15 +22,12 @@ export function includeExpressMiddleware(app: Express) {
       credentials: true,
     }),
   );
-  app.use(cookiParser());
   app.use(urlencoded({ extended: false }));
   app.use(json());
-  app.use(syntaxErrorHandler);
 }
 
 export function includeExpressRoutes(app: Express) {
-  app.use('/user', userRoute);
-
+  app.use('/email', emailRoute);
   //404 route
   app.all('/{*any}', pageNotFound);
 }

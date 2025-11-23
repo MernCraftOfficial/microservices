@@ -3,6 +3,8 @@ import tryCatchErrorHandler from '../helper/tryCatchHelper';
 import response from '../helper/responseHelper';
 import { JwtRequest } from '../types/commonTypes';
 import UserRelationsRepository from '../repository/userRelationsRepository';
+import { fetchHelper } from '../helper/fetchHelper';
+import userService from '../services/userService';
 
 export const createUserRelation = tryCatchErrorHandler(
   async (req: JwtRequest, res: Response, next: NextFunction) => {
@@ -58,6 +60,24 @@ export const getUserRelations = tryCatchErrorHandler(
         return;
       }
 
+      let ids: string[] = [];
+      let responseData: any = userRelations.map((relation) => {
+        ids.push(relation?.entityId?.toString());
+        return { requestStatus: relation?.status ?? '' };
+      });
+
+      const userServiceResponse = await userService.getFriendsDataByIds(ids);
+
+      if (userServiceResponse?.success) {
+        responseData = userServiceResponse?.data?.map(
+          (user: any, index: number) => {
+            return { ...user, ...(responseData[index] ?? {}) };
+          },
+        );
+
+        response.sendSuccessResponse(res, 'OK', responseData);
+        return;
+      }
       response.sendSuccessResponse(res, 'OK', userRelations);
       return;
     } catch (error: any) {

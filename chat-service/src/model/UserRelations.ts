@@ -38,9 +38,10 @@ const userRelationsSchema = new mongoose.Schema(
     toJSON: {
       transform(doc, ret: any) {
         // Convert ObjectIds to strings
-        ret._id = ret._id?.toString();
         ret.entityId = ret.entityId?.toString();
         // Remove internal fields
+        delete ret._id;
+        delete ret.userId;
         delete ret.__v;
         return ret;
       },
