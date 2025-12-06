@@ -16,6 +16,6 @@ export function startHttpServer() {
   const PORT: string = env.PORT;
   const server: Server = getHttpServerInstance();
   server.listen(PORT, () => {
-    console.log(`Listening HTTP Server at http://localhost:${PORT}`);
+    console.log(`Chat Service is running at http://localhost:${PORT}`);
   });
 }

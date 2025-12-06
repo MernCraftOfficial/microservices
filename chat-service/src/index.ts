@@ -1,6 +1,5 @@
 import {
   getExpressApp,
-  startExpressAppServer,
   includeExpressMiddleware,
   includeExpressRoutes,
 } from './config/express';

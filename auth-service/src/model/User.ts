@@ -6,6 +6,7 @@ export type Username = { firstname: string; lastname?: string };
 
 // Interface representing a User document
 export interface IUser extends Document {
+  _id: string;
   username: Username;
   email: string;
   password: string;

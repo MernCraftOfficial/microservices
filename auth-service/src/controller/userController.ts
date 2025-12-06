@@ -14,6 +14,7 @@ import env from '../config/env';
 import { destroyRediskey } from '../config/redis';
 import { CryptoRequest, JwtRequest } from '../types/commonTypes';
 import logger from '../config/winston';
+import emailService from '../services/emailService';
 
 export const signin = tryCatchErrorHandler(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -37,6 +38,37 @@ export const signin = tryCatchErrorHandler(
         'UNAUTHORIZED',
         "Password doesn't match!",
       );
+      return;
+    }
+
+    if (!userDetails?.isVerified) {
+      const accountVerificationToken = await generateCryptoToken(
+        env.REDIS_KEY_PREFIX.account_verfication,
+        userDetails?._id,
+      );
+
+      setCookie(
+        res,
+        env.COOKIE_KEYS.crypto_token,
+        accountVerificationToken?.token,
+      );
+
+      //send email
+      emailService.sendEmail({
+        receiverEmail: email,
+        emailTemplate: 'account-verification',
+        subject: 'Verify Your Account',
+        context: {
+          name: userDetails?.username?.firstname,
+          otp: accountVerificationToken?.otp,
+        },
+      });
+
+      response.sendErrorResponse(res, 'FORBIDDEN', {
+        token: accountVerificationToken?.token,
+        error: 'Verify your account first',
+      });
+
       return;
     }
 
@@ -89,10 +121,25 @@ export const signup = tryCatchErrorHandler(
         userId,
       );
 
-      setCookie(res, env.COOKIE_KEYS.crypto_token, accountVerificationToken);
+      setCookie(
+        res,
+        env.COOKIE_KEYS.crypto_token,
+        accountVerificationToken?.token,
+      );
+
+      //send email
+      emailService.sendEmail({
+        receiverEmail: email,
+        emailTemplate: 'account-verification',
+        subject: 'Verify Your Account',
+        context: {
+          name: extractedUsername?.firstname,
+          otp: accountVerificationToken?.otp,
+        },
+      });
 
       response.sendSuccessResponse(res, 'OK', {
-        token: accountVerificationToken,
+        token: accountVerificationToken?.token,
       });
       return;
     } catch (error: any) {
@@ -146,14 +193,28 @@ export const forgotPassword = tryCatchErrorHandler(
       return;
     }
 
-    const token = await generateCryptoToken(
+    const forgotPasswordToken = await generateCryptoToken(
       env.REDIS_KEY_PREFIX.reset_password,
       userId,
     );
 
-    setCookie(res, env.COOKIE_KEYS.crypto_token, token);
+    setCookie(res, env.COOKIE_KEYS.crypto_token, forgotPasswordToken?.token);
 
-    response.sendSuccessResponse(res, 'OK', { token, email });
+    //send email
+    emailService.sendEmail({
+      receiverEmail: email,
+      emailTemplate: 'reset-password',
+      subject: 'Reset Your Password',
+      context: {
+        name: isUserExist?.username?.firstname,
+        otp: forgotPasswordToken?.otp,
+      },
+    });
+
+    response.sendSuccessResponse(res, 'OK', {
+      token: forgotPasswordToken?.token,
+      email,
+    });
     return;
   },
 );

@@ -12,7 +12,7 @@ export const sendEmail = tryCatchErrorHandler(
       context = {},
     } = req?.body;
 
-    if (!receiverEmail || !emailTemplate || subject) {
+    if (!receiverEmail || !emailTemplate || !subject) {
       response.sendErrorResponse(
         res,
         'BAD_REQUEST',
@@ -38,7 +38,7 @@ export const sendEmail = tryCatchErrorHandler(
         return;
       }
 
-      response.sendErrorResponse(res, 'OK', 'Email sent!');
+      response.sendSuccessResponse(res, 'OK', 'Email sent!');
       return;
     });
   },

@@ -40,6 +40,6 @@ export function includeExpressRoutes(app: Express) {
 export function startExpressAppServer(app: Express) {
   const PORT: string = env.PORT;
   app.listen(PORT, () => {
-    console.log(`Listening Express Server at http://localhost:${PORT}`);
+    console.log(`Auth Service is running at http://localhost:${PORT}`);
   });
 }
