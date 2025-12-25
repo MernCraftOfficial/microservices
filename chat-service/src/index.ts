@@ -17,7 +17,7 @@ async function init() {
   const app = getExpressApp();
 
   //connect to redis
-  const redis = getRedisClient();
+  getRedisClient();
 
   //sockets
   startChatSocket();

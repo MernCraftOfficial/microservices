@@ -46,7 +46,7 @@ userRoute.patch(
   resetPassword,
 );
 userRoute.get('/', authenticate, searchUser);
-userRoute.post('/signout', signout);
+userRoute.post('/signout', authenticate, signout);
 userRoute.get('/me', authenticate, getMe);
 userRoute.get('/usersData', authenticate, getUsersDataByIds);
 userRoute.get('/:id', authenticate, getUserById);

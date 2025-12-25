@@ -12,4 +12,21 @@ export async function getFriendsDataByIds(ids: string[]) {
   return response;
 }
 
-export default { getFriendsDataByIds };
+export async function updateUserStatus(status: string, accessToken: string) {
+  const params: { path: string; options: fetchProps } = {
+    path: `/user/updateUserStatus`,
+    options: {
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+      },
+      method: 'PATCH',
+    },
+  };
+
+  const response: Response = await fetchHelper(params);
+  return response;
+}
+
+const defaultExport = { getFriendsDataByIds, updateUserStatus };
+
+export default defaultExport;

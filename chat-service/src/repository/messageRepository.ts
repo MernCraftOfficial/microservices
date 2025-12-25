@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import { Message } from '../model/Message';
 
 export const createMessage = async (data: any) => {
@@ -10,6 +9,7 @@ export const createMessage = async (data: any) => {
     messageType: data?.messaageType,
     createdAt: data?.createdAt,
     updatedAt: data?.updatedAt,
+    receivedAt: data?.receivedAt,
   };
 
   const newMessage = await Message.create(message);
@@ -48,7 +48,12 @@ export const updateMessage = async (data: any) => {
 export const getMessages = async (data: any) => {
   const { sender = null, receiver = null, limit = 50, page = 0 } = data;
 
-  const messages = await Message.find({ sender, receiver })
+  const messages = await Message.find({
+    $or: [
+      { sender, receiver },
+      { sender: receiver, receiver: sender },
+    ],
+  })
     .sort({ createdAt: -1 })
     .skip(page * limit)
     .limit(limit);
@@ -91,10 +96,45 @@ export const deleteWholeChat = async ({
   return deletedChat;
 };
 
+export const markMessagesReceived = async (
+  receiverId: string,
+  receivedAt: string = new Date().toISOString(),
+) => {
+  const markReceived = await Message.updateMany(
+    { receiver: receiverId, messageStatus: 'sent' },
+    { $set: { messageStatus: 'received', receivedAt } },
+    { runValidators: true },
+  );
+
+  if (!markReceived || markReceived?.matchedCount == 0) {
+    return false;
+  }
+
+  return markReceived;
+};
+
+export const markMessagesRead = async (data: any) => {
+  const { receiver = null, sender = null, messageStatus = 'read' } = data;
+
+  const markReceived = await Message.updateMany(
+    { receiver, sender },
+    { $set: { messageStatus } },
+    { runValidators: true },
+  );
+
+  if (!markReceived || markReceived?.matchedCount == 0) {
+    return false;
+  }
+
+  return markReceived;
+};
+
 export default {
   createMessage,
   updateMessage,
   getMessages,
   deleteMessageById,
   deleteWholeChat,
+  markMessagesReceived,
+  markMessagesRead,
 };

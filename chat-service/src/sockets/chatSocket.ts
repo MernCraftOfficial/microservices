@@ -1,57 +1,77 @@
 import { Namespace, Socket } from 'socket.io';
 import { createSocketNamespace } from '../config/socket';
-import { createMessage, updateMessage } from '../repository/messageRepository';
+import messageRepository, {
+  createMessage,
+  updateMessage,
+} from '../repository/messageRepository';
+import authenticate from '../middleware/socketMiddlware';
+import env from '../config/env';
 let chatSocketNamespace: Namespace | null = null;
 export function startChatSocket() {
   chatSocketNamespace = createSocketNamespace('/uchat');
-  chatSocketNamespace.on('connection', (socket) => {
-    console.log('user connected');
-    onUserData(socket);
+
+  chatSocketNamespace.use(authenticate);
+
+  chatSocketNamespace.on('connection', async (socket) => {
+    console.log('User Connnected!');
+    await onConnection(socket);
     onPrivateChat(socket);
     onGroupChat(socket);
     socket.on('disconnect', () => {
-      console.log('user disconnected!');
+      socket.broadcast.emit('friendDisconnect', { _id: socket?.data?.userId });
     });
   });
 }
 
 //make users join their own room
-function onUserData(socket: Socket) {
-  socket.on('userData', async (data, ack) => {
-    console.log('userData:', data);
-    const roomId = data._id;
-    await socket.join(roomId);
-    ack?.(`You are successfully connected!`);
+async function onConnection(socket: Socket) {
+  const roomId = socket?.data?.userId;
+  await socket.join(roomId);
+  const receivedAt = new Date().toISOString();
+  await messageRepository.markMessagesReceived(roomId, receivedAt);
+  socket.broadcast.emit('onMessageStatusChanged', {
+    receiver: roomId,
+    messageStatus: 'received',
+    receivedAt,
   });
+  socket.emit('onConnectionSuccess', 'You are successfully connected!');
+  socket.broadcast.emit('friendConnect', { _id: socket?.data?.userId });
 }
 
 function onPrivateChat(socket: Socket) {
+  const userId = socket?.data?.userId;
   socket.on('privateMessage', async (data, ack) => {
     const {
       timeStamp = new Date().toISOString(),
-      sender = null,
       receiver = null,
       content = null,
       messageType = 'text',
     } = data;
 
-    if (!sender || !receiver) {
+    if (!receiver) {
       ack?.('Something went wrong!');
       return;
     }
 
-    const message = {
+    let message = {
       content: content,
-      sender: sender,
+      sender: userId,
       receiver: receiver,
       messageStatus: 'sent',
       messageType: messageType,
       createdAt: timeStamp,
+      receivedAt: null,
     };
 
-    const savedMessage = await createMessage(message);
+    if (userId == receiver) {
+      message = {
+        ...message,
+        messageStatus: 'read',
+        receivedAt: timeStamp,
+      };
+    }
 
-    console.log(savedMessage);
+    const savedMessage = await createMessage(message);
 
     if (!savedMessage) {
       ack?.('Unable to send message!');
@@ -60,7 +80,7 @@ function onPrivateChat(socket: Socket) {
 
     socket.emit('privateMessageSent', savedMessage);
 
-    if (sender !== receiver) {
+    if (userId !== receiver) {
       chatSocketNamespace
         ?.to(receiver)
         .emit('privateMessageReceived', savedMessage);
@@ -68,27 +88,32 @@ function onPrivateChat(socket: Socket) {
   });
 
   socket.on('privateMessageReceived', async (data, ack) => {
-    const {
-      _id = null,
-      sender = null,
-      receiver = null,
-      receivedAt = new Date().toISOString(),
-    } = data;
-    const updatedMessage = await updateMessage({
-      _id: data?._id,
-      dataToUpdate: { messageStatus: 'received', receivedAt },
-    });
+    const { sender = null, receivedAt = new Date().toISOString() } = data;
+
+    const updatedMessage = await messageRepository.markMessagesReceived(
+      userId,
+      receivedAt,
+    );
 
     if (!updatedMessage) {
       ack?.('Unable to change message status!');
       return;
     }
 
-    chatSocketNamespace?.to(sender).emit('messageStatusChanged', {
-      _id,
-      receiver,
+    chatSocketNamespace?.to(sender).emit('onMessageStatusChanged', {
+      receiver: userId,
       messageStatus: 'received',
       receivedAt,
+    });
+  });
+
+  socket.on('markMessageAsRead', async (data) => {
+    data.receiver = userId;
+    await messageRepository.markMessagesRead(data);
+
+    chatSocketNamespace?.to(data?.sender).emit('onMessageStatusChanged', {
+      receiver: userId,
+      messageStatus: 'read',
     });
   });
 }

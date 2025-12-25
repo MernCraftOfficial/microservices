@@ -22,13 +22,28 @@ export async function fetchHelper({
   options: fetchProps;
 }) {
   //validate headers
+
+  if (options?.headers) {
+    options.headers = {
+      ...options?.headers,
+      'Content-Type': 'application/json',
+    };
+  }
+
   if (!options.headers) {
     const ctx = requestContext.getStore();
     const token = ctx?.token || '';
+
     options.headers = {
       'Content-Type': 'application/json',
-      authorization: `Bearer ${token}`,
     };
+
+    if (token) {
+      options.headers = {
+        ...options?.headers,
+        authorization: `Bearer ${token}`,
+      };
+    }
   }
 
   // validate body
@@ -43,6 +58,8 @@ export async function fetchHelper({
   const url = env?.AUTH_SERVICE + (path ?? '');
 
   let errorMessage = null;
+
+  console.log(options);
   //fetch
   try {
     const response = await fetch(url, { ...options, credentials: 'include' });

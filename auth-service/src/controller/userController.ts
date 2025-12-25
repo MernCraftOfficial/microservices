@@ -72,6 +72,12 @@ export const signin = tryCatchErrorHandler(
       return;
     }
 
+    await User.updateOne(
+      { _id: userDetails?._id },
+      { $set: { status: 'active' } },
+      { runValidators: true },
+    );
+
     const accessToken = createAuthToken({ _id: userDetails?._id });
     setCookie(res, env.COOKIE_KEYS?.jwt_token, accessToken);
     response.sendSuccessResponse(res, 'OK', {
@@ -92,7 +98,7 @@ export const signup = tryCatchErrorHandler(
       response.sendErrorResponse(
         res,
         'CONFLICT',
-        'The email already registered with us!',
+        'This email is already registered with us!',
       );
       return;
     }
@@ -165,7 +171,13 @@ export const verifyAccount = tryCatchErrorHandler(
     unsetCookie(res, env.REDIS_KEY_PREFIX.account_verfication);
     unsetCookie(res, env?.COOKIE_KEYS?.otp_verified);
 
-    response.sendSuccessResponse(res, 'OK', 'Account successfully verified');
+    const accessToken = createAuthToken({ _id: user?._id });
+    setCookie(res, env.COOKIE_KEYS?.jwt_token, accessToken);
+
+    response.sendSuccessResponse(res, 'OK', {
+      ...removeKey.apply(isVerified.toObject(), ['password', '__v']),
+      [env.COOKIE_KEYS?.jwt_token]: accessToken,
+    });
     return;
   },
 );
@@ -369,9 +381,22 @@ export const getUserById = tryCatchErrorHandler(
 );
 
 export const signout = tryCatchErrorHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
-    clearCookies(res);
-    response.sendSuccessResponse(res, 'OK', 'Signout successful');
+  async (req: JwtRequest, res: Response, next: NextFunction) => {
+    let { user = null } = req;
+
+    try {
+      await User.updateOne(
+        { _id: user?._id },
+        { $set: { status: 'offline' } },
+        { runValidators: true },
+      );
+      clearCookies(res);
+      response.sendSuccessResponse(res, 'OK', 'Signout successful');
+      return;
+    } catch (error: any) {
+      response.sendErrorResponse(res, 'INTERNAL_SERVER_ERROR', error?.message);
+      return;
+    }
   },
 );
 
@@ -438,6 +463,27 @@ export const getUsersDataByIds = tryCatchErrorHandler(
       return;
     } catch (error: any) {
       logger.error(error);
+      response.sendErrorResponse(res, 'BAD_REQUEST', error.message);
+      return;
+    }
+  },
+);
+
+export const updateUserStatus = tryCatchErrorHandler(
+  async (req: JwtRequest, res: Response, next: NextFunction) => {
+    let { user } = req;
+    let { status = 'offline' } = req?.body;
+
+    try {
+      await User.updateOne(
+        { _id: user?._id },
+        { $set: { status } },
+        { runValidators: true },
+      );
+
+      response.sendSuccessResponse(res, 'OK', 'User status is updated!');
+      return;
+    } catch (error: any) {
       response.sendErrorResponse(res, 'BAD_REQUEST', error.message);
       return;
     }

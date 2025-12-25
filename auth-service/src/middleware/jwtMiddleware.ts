@@ -4,6 +4,7 @@ import env from '../config/env';
 import response from '../helper/responseHelper';
 import { retrieveJwtToken } from '../helper/commonHelper';
 import { JwtRequest } from '../types/commonTypes';
+import { clearCookies } from '../helper/cookieHelper';
 const authenticate = (req: JwtRequest, res: Response, next: NextFunction) => {
   //get the user from jwt and add id to req object
   try {
@@ -26,6 +27,7 @@ const authenticate = (req: JwtRequest, res: Response, next: NextFunction) => {
     const userData = jwt.verify(token, env.JWT_AUTH_SECRET);
 
     if (!userData || typeof userData == 'string') {
+      clearCookies(res);
       response.sendErrorResponse(res, 'BAD_REQUEST', 'Token does not match!');
       return;
     }
@@ -33,6 +35,7 @@ const authenticate = (req: JwtRequest, res: Response, next: NextFunction) => {
     req.user = userData;
     next();
   } catch (error: any) {
+    clearCookies(res);
     response.sendServerError(res, 'UNAUTHORIZED', error.message);
     return;
   }

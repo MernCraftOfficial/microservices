@@ -63,7 +63,11 @@ export const getUserRelations = tryCatchErrorHandler(
       let ids: string[] = [];
       let responseData: any = userRelations.map((relation) => {
         ids.push(relation?.entityId?.toString());
-        return { requestStatus: relation?.status ?? '' };
+        return {
+          requestStatus: relation?.status ?? '',
+          unreadMessages: relation?.unreadMessages,
+          lastMessage: relation?.lastMessage,
+        };
       });
 
       const userServiceResponse = await userService.getFriendsDataByIds(ids);

@@ -20,8 +20,8 @@ const MessageSchema = new Schema(
     content: { type: String, required: true },
     messageStatus: {
       type: String,
-      enum: ['pending', 'sent', 'received', 'read'],
-      default: 'pending',
+      enum: ['sent', 'received', 'read'],
+      default: 'sent',
     },
     messageType: {
       type: String,

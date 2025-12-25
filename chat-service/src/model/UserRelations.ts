@@ -27,6 +27,16 @@ const userRelationsSchema = new mongoose.Schema(
       default: 'pending',
     },
 
+    unreadMessages: {
+      type: Number,
+      default: 0,
+    },
+
+    lastMessage: {
+      type: String,
+      default: null,
+    },
+
     role: {
       type: String,
       enum: ['admin', 'member', 'owner', null],

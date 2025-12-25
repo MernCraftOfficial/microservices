@@ -29,3 +29,14 @@ export const unsetCookie = (res: Response, key: string) => {
   });
   return true;
 };
+
+export const parseCookies = (cookieHeader: string): Record<string, string> => {
+  return cookieHeader.split('; ').reduce(
+    (acc, curr) => {
+      const [key, value] = curr.split('=');
+      acc[key] = decodeURIComponent(value);
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
+};
