@@ -1,9 +1,18 @@
 import { Schema, model } from 'mongoose';
 export type MessageType = 'text' | 'image' | 'video' | 'file' | 'audio';
 export type MessageStatus = 'pending' | 'sent' | 'received' | 'read';
+export type MediaType = {
+  url: String; // file URL
+  publicId: String; // cloud storage ID
+  mimeType: String; // video/mp4, image/png, etc
+  size: Number; // bytes
+  duration: Number; // seconds (audio/video)
+  fileName: String;
+};
 export interface Message extends Document {
   _id: string;
   content: string;
+  media: MediaType;
   sender: string;
   receiver: string;
   messageStatus: MessageStatus;
@@ -17,11 +26,20 @@ const MessageSchema = new Schema(
   {
     sender: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     receiver: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    content: { type: String, required: true },
+    content: { type: String, required: false, default: null },
     messageStatus: {
       type: String,
       enum: ['sent', 'received', 'read'],
       default: 'sent',
+    },
+
+    media: {
+      url: String, // file URL
+      publicId: String, // cloud storage ID
+      mimeType: String, // video/mp4, image/png, etc
+      size: Number, // bytes
+      duration: Number, // seconds (audio/video)
+      fileName: String,
     },
     messageType: {
       type: String,
