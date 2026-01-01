@@ -34,7 +34,7 @@ const signinSchema = joi.object({
 });
 
 const resetPasswordSchema = joi.object({
-  newPassword: joi
+  password: joi
     .string()
     .min(8)
     .max(30)
@@ -46,7 +46,6 @@ const resetPasswordSchema = joi.object({
       'string.pattern.base':
         'The password must contain lowercase letter, uppercase letter, digit, special character and be between 8 and 30 characters long.',
     }),
-  confirmPassword: joi.valid(joi.ref('newPassword')).required(),
 });
 
 const forgotPasswordSchema = joi.object({

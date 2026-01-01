@@ -2,23 +2,17 @@ import { Schema, model, Document } from 'mongoose';
 import bcrypt from 'bcrypt';
 import env from '../config/env';
 
-// Interface representing a Group subdocument
-interface Group {
-  group: Schema.Types.ObjectId;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'MEMBER' | 'GUEST';
-}
-
 export type Username = { firstname: string; lastname?: string };
 
 // Interface representing a User document
 export interface IUser extends Document {
+  _id: string;
   username: Username;
   email: string;
   password: string;
   profilePictureUrl: string;
-  role?: 'ADMIN' | 'USER';
-  status: 'INACTIVE' | 'ACTIVE' | 'BUSY';
-  groups: Group[];
+  role?: 'super_admin' | 'admin' | 'user' | 'guest';
+  status: 'active' | 'busy' | 'away' | 'offline';
   lastSeen?: Date;
   language?: string;
   isVerified: boolean;
@@ -43,31 +37,41 @@ const UserSchema = new Schema<IUser>(
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true, minlength: 8, maxlength: 16 },
     profilePictureUrl: { type: String, required: false },
-    role: { type: String, required: true, default: 'USER', uppercase: true },
+    role: {
+      type: String,
+      enum: ['super_admin', 'admin', 'user', 'guest'],
+      required: true,
+      default: 'user',
+      lowercase: true,
+    },
     status: {
       type: String,
-      enum: ['INACTIVE', 'ACTIVE', 'BUSY'],
+      enum: ['active', 'busy', 'away', 'offline'],
       required: true,
-      uppercase: true,
-      default: 'INACTIVE',
+      lowercase: true,
+      default: 'offline',
     },
-    groups: [
-      {
-        group: { type: Schema.Types.ObjectId, ref: 'Group', required: true },
-        role: {
-          type: String,
-          enum: ['ADMIN', 'MEMBER', 'GUEST'],
-          required: true,
-          uppercase: true,
-          default: 'GUEST',
-        },
-      },
-    ],
     lastSeen: { type: Date, default: Date.now },
     language: { type: String, default: 'en' },
     isVerified: { type: Boolean, default: false },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret: any) {
+        // Convert ObjectIds to strings
+        ret._id = ret._id?.toString();
+        ret.sender = ret.sender?.toString();
+        ret.receiver = ret.receiver?.toString();
+
+        // Remove internal fields
+        delete ret.__v;
+        delete ret.password;
+
+        return ret;
+      },
+    },
+  },
 );
 
 // Pre-save hook to hash password if modified

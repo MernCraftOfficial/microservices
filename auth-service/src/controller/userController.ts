@@ -9,9 +9,12 @@ import tryCatchErrorHandler from '../helper/tryCatchHelper';
 import { createAuthToken } from '../helper/jwtHelper';
 import response from '../helper/responseHelper';
 import { generateCryptoToken } from '../helper/cryptoHelper';
-import { clearCookies, setCookie } from '../helper/cookieHelper';
+import { clearCookies, setCookie, unsetCookie } from '../helper/cookieHelper';
 import env from '../config/env';
 import { destroyRediskey } from '../config/redis';
+import { CryptoRequest, JwtRequest } from '../types/commonTypes';
+import logger from '../config/winston';
+import emailService from '../services/emailService';
 
 export const signin = tryCatchErrorHandler(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -38,11 +41,48 @@ export const signin = tryCatchErrorHandler(
       return;
     }
 
+    if (!userDetails?.isVerified) {
+      const accountVerificationToken = await generateCryptoToken(
+        env.REDIS_KEY_PREFIX.account_verfication,
+        userDetails?._id,
+      );
+
+      setCookie(
+        res,
+        env.COOKIE_KEYS.crypto_token,
+        accountVerificationToken?.token,
+      );
+
+      //send email
+      emailService.sendEmail({
+        receiverEmail: email,
+        emailTemplate: 'account-verification',
+        subject: 'Verify Your Account',
+        context: {
+          name: userDetails?.username?.firstname,
+          otp: accountVerificationToken?.otp,
+        },
+      });
+
+      response.sendErrorResponse(res, 'FORBIDDEN', {
+        token: accountVerificationToken?.token,
+        error: 'Verify your account first',
+      });
+
+      return;
+    }
+
+    await User.updateOne(
+      { _id: userDetails?._id },
+      { $set: { status: 'active' } },
+      { runValidators: true },
+    );
+
     const accessToken = createAuthToken({ _id: userDetails?._id });
     setCookie(res, env.COOKIE_KEYS?.jwt_token, accessToken);
     response.sendSuccessResponse(res, 'OK', {
       ...removeKey.apply(userDetails.toObject(), ['password', '__v']),
-      accessToken,
+      [env.COOKIE_KEYS?.jwt_token]: accessToken,
     });
     return;
   },
@@ -58,7 +98,7 @@ export const signup = tryCatchErrorHandler(
       response.sendErrorResponse(
         res,
         'CONFLICT',
-        'The email already registered with us!',
+        'This email is already registered with us!',
       );
       return;
     }
@@ -87,10 +127,25 @@ export const signup = tryCatchErrorHandler(
         userId,
       );
 
-      setCookie(res, env.COOKIE_KEYS.crypto_token, accountVerificationToken);
+      setCookie(
+        res,
+        env.COOKIE_KEYS.crypto_token,
+        accountVerificationToken?.token,
+      );
+
+      //send email
+      emailService.sendEmail({
+        receiverEmail: email,
+        emailTemplate: 'account-verification',
+        subject: 'Verify Your Account',
+        context: {
+          name: extractedUsername?.firstname,
+          otp: accountVerificationToken?.otp,
+        },
+      });
 
       response.sendSuccessResponse(res, 'OK', {
-        token: accountVerificationToken,
+        token: accountVerificationToken?.token,
       });
       return;
     } catch (error: any) {
@@ -100,23 +155,29 @@ export const signup = tryCatchErrorHandler(
 );
 
 export const verifyAccount = tryCatchErrorHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: CryptoRequest, res: Response, next: NextFunction) => {
     //redis otp validation pending
-    const user = req.body.user;
+    const user = req?.user;
     const isVerified = await User.findByIdAndUpdate(
-      user._id,
+      user?._id,
       { $set: { isVerified: true } },
-      { new: true },
+      { new: true, runValidators: true },
     );
 
     if (!isVerified) {
       throw new Error('Something went wrong!');
     }
 
-    const accessToken = createAuthToken(user);
-    setCookie(res, env.COOKIE_KEYS.jwt_token, accessToken);
+    unsetCookie(res, env.REDIS_KEY_PREFIX.account_verfication);
+    unsetCookie(res, env?.COOKIE_KEYS?.otp_verified);
 
-    response.sendSuccessResponse(res, 'OK', { token: accessToken });
+    const accessToken = createAuthToken({ _id: user?._id });
+    setCookie(res, env.COOKIE_KEYS?.jwt_token, accessToken);
+
+    response.sendSuccessResponse(res, 'OK', {
+      ...removeKey.apply(isVerified.toObject(), ['password', '__v']),
+      [env.COOKIE_KEYS?.jwt_token]: accessToken,
+    });
     return;
   },
 );
@@ -127,13 +188,13 @@ export const updateUser = tryCatchErrorHandler(
 
 export const forgotPassword = tryCatchErrorHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { email } = req?.query;
+    const { email } = req?.body;
     const isUserExist = await User.findOne({
       email,
       isVerified: true,
     }).select('_id username');
 
-    const userId = isUserExist?._id?.toString();
+    const userId = isUserExist?._id?.toString() ?? '';
 
     if (!isUserExist || !userId) {
       response.sendErrorResponse(
@@ -144,14 +205,28 @@ export const forgotPassword = tryCatchErrorHandler(
       return;
     }
 
-    const token = await generateCryptoToken(
+    const forgotPasswordToken = await generateCryptoToken(
       env.REDIS_KEY_PREFIX.reset_password,
       userId,
     );
 
-    setCookie(res, env.COOKIE_KEYS.crypto_token, token);
+    setCookie(res, env.COOKIE_KEYS.crypto_token, forgotPasswordToken?.token);
 
-    response.sendSuccessResponse(res, 'OK', { token, email });
+    //send email
+    emailService.sendEmail({
+      receiverEmail: email,
+      emailTemplate: 'reset-password',
+      subject: 'Reset Your Password',
+      context: {
+        name: isUserExist?.username?.firstname,
+        otp: forgotPasswordToken?.otp,
+      },
+    });
+
+    response.sendSuccessResponse(res, 'OK', {
+      token: forgotPasswordToken?.token,
+      email,
+    });
     return;
   },
 );
@@ -164,9 +239,12 @@ export const otpVerification = tryCatchErrorHandler(
 );
 
 export const resetPassword = tryCatchErrorHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
-    let { password } = req.body;
-    const { user, redisKey } = req.body;
+  async (req: CryptoRequest, res: Response, next: NextFunction) => {
+    let {
+      user,
+      redisKey,
+      body: { password },
+    } = req;
 
     password = password.trim();
     if (!password) {
@@ -178,7 +256,7 @@ export const resetPassword = tryCatchErrorHandler(
       return;
     }
 
-    const userDetails = await User.findOne({ _id: user._id });
+    const userDetails = await User.findOne({ _id: user?._id });
 
     if (!userDetails) {
       response.sendErrorResponse(res, 'NOT_FOUND', 'Something went wrong!');
@@ -192,6 +270,8 @@ export const resetPassword = tryCatchErrorHandler(
         throw new Error('Something went wrong!');
       }
       destroyRediskey(redisKey);
+      unsetCookie(res, env.COOKIE_KEYS.crypto_token);
+      unsetCookie(res, env?.COOKIE_KEYS?.otp_verified);
       response.sendSuccessResponse(res, 'OK', 'Password successfully updated!');
       return;
     } catch (error: any) {
@@ -267,7 +347,7 @@ export const searchUser = tryCatchErrorHandler(
       response.sendErrorResponse(
         res,
         'NOT_FOUND',
-        'No user found with this username!',
+        'No user found with this search term!',
       );
       return;
     }
@@ -301,7 +381,111 @@ export const getUserById = tryCatchErrorHandler(
 );
 
 export const signout = tryCatchErrorHandler(
+  async (req: JwtRequest, res: Response, next: NextFunction) => {
+    let { user = null } = req;
+
+    try {
+      await User.updateOne(
+        { _id: user?._id },
+        { $set: { status: 'offline' } },
+        { runValidators: true },
+      );
+      clearCookies(res);
+      response.sendSuccessResponse(res, 'OK', 'Signout successful');
+      return;
+    } catch (error: any) {
+      response.sendErrorResponse(res, 'INTERNAL_SERVER_ERROR', error?.message);
+      return;
+    }
+  },
+);
+
+export const getMe = tryCatchErrorHandler(
+  async (req: JwtRequest, res: Response, nex: NextFunction) => {
+    const { user } = req;
+
+    if (!user) {
+      clearCookies(res);
+      response.sendErrorResponse(res, 'UNAUTHORIZED', 'Please sign in again!');
+      return;
+    }
+
+    try {
+      const getUser = await User.findById(user?._id).select('-password -__v');
+      if (!getUser) {
+        response.sendErrorResponse(
+          res,
+          'NOT_FOUND',
+          'User is not registered with us!',
+        );
+        return;
+      }
+
+      response.sendSuccessResponse(res, 'OK', getUser);
+      return;
+    } catch (error: any) {
+      response.sendErrorResponse(res, 'BAD_REQUEST', error.message);
+      return;
+    }
+  },
+);
+
+export const getUsersDataByIds = tryCatchErrorHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    clearCookies(res);
+    const userIds = req?.query?.ids;
+
+    if (!userIds) {
+      response.sendErrorResponse(
+        res,
+        'BAD_REQUEST',
+        'Please provide user ids!',
+      );
+      return;
+    }
+
+    const userIdsArray = userIds.toString().split(',');
+
+    try {
+      const users = await User.find({
+        _id: { $in: userIdsArray },
+      }).select('-password -__v');
+
+      if (!users) {
+        response.sendErrorResponse(
+          res,
+          'NOT_FOUND',
+          'Users are not registered with us!',
+        );
+        return;
+      }
+
+      response.sendSuccessResponse(res, 'OK', users);
+      return;
+    } catch (error: any) {
+      logger.error(error);
+      response.sendErrorResponse(res, 'BAD_REQUEST', error.message);
+      return;
+    }
+  },
+);
+
+export const updateUserStatus = tryCatchErrorHandler(
+  async (req: JwtRequest, res: Response, next: NextFunction) => {
+    let { user } = req;
+    let { status = 'offline' } = req?.body;
+
+    try {
+      await User.updateOne(
+        { _id: user?._id },
+        { $set: { status } },
+        { runValidators: true },
+      );
+
+      response.sendSuccessResponse(res, 'OK', 'User status is updated!');
+      return;
+    } catch (error: any) {
+      response.sendErrorResponse(res, 'BAD_REQUEST', error.message);
+      return;
+    }
   },
 );

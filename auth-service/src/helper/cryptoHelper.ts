@@ -1,10 +1,5 @@
 import { randomBytes, randomInt } from 'crypto';
-import {
-  setRedisKey,
-  getRedisKey,
-  setRedisExpiry,
-  destroyRediskey,
-} from '../config/redis';
+import { setRedisKey, getRedisKey, setRedisExpiry } from '../config/redis';
 
 export async function generateCryptoToken(
   tokenType: string,
@@ -19,7 +14,7 @@ export async function generateCryptoToken(
     JSON.stringify({ _id: userId, otp, isOtpVerified: false }),
   );
   await setRedisExpiry(redisKey);
-  return token;
+  return { token, otp };
 }
 
 export async function verifyCryptoToken(tokenType: string, token: string) {
@@ -29,9 +24,7 @@ export async function verifyCryptoToken(tokenType: string, token: string) {
 }
 
 export function generateSecureOTP(): string {
-  // Generate a number between 100000 and 999999
   const otp = randomInt(100000, 1000000);
-  console.log('OTP :' + otp);
   return otp.toString();
 }
 
