@@ -53,7 +53,6 @@ export async function fetchHelper({
   } catch (error: any) {
     console.error(error.message);
   } finally {
-    console.log(json_response);
     if (errorMessage) {
       return { ...json_response, errorMessage };
     }
