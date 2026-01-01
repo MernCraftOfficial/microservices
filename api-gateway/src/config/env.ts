@@ -6,6 +6,7 @@ interface Env {
   PORT: string;
   AUTH_SERVICE: string;
   CHAT_SERVICE: string;
+  ALLOWED_ORIGINS: string;
 }
 
 const env: Env = {
@@ -13,6 +14,7 @@ const env: Env = {
   PORT: process.env.PORT ?? "5000",
   AUTH_SERVICE: process.env.AUTH_SERVICE ?? "",
   CHAT_SERVICE: process.env.CHAT_SERVICE ?? "",
+  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS ?? "",
 };
 
 export default env;

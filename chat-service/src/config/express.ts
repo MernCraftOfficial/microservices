@@ -20,12 +20,22 @@ export function getExpressApp() {
 
 export function includeExpressMiddleware(app: Express) {
   //body parser
+  const allowedOrigins = env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim());
+
   app.use(
     cors({
-      origin: env.ALLOWED_ORIGINS, // your Next.js frontend
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+        callback(new Error('Not allowed by CORS'));
+      },
       credentials: true,
     }),
   );
+
+  app.options('/{*any}', cors());
   app.use(cookiParser());
   app.use(urlencoded({ extended: false }));
   app.use(json());
