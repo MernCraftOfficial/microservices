@@ -5,7 +5,6 @@ import messageRepository, {
   updateMessage,
 } from '../repository/messageRepository';
 import authenticate from '../middleware/socketMiddlware';
-import env from '../config/env';
 let chatSocketNamespace: Namespace | null = null;
 export function startChatSocket() {
   chatSocketNamespace = createSocketNamespace('/uchat');

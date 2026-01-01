@@ -1,5 +1,6 @@
 import express, { NextFunction, Request, Response } from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import env from "./config/env";
 
 const app = express();
 
@@ -36,6 +37,14 @@ app.use(
   })
 );
 
-app.listen(5000, () =>
-  console.log("API Gateway running at http://localhost:5000")
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+    path: req.originalUrl,
+  });
+});
+
+app.listen(env.PORT, () =>
+  console.log(`API Gateway running at http://localhost:${env.PORT}`)
 );
