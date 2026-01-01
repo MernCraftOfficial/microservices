@@ -9,6 +9,7 @@ interface Env {
   RABBIT_MQ_URI: string;
   GMAIL_USER: string;
   GMAIL_PASSWORD: string;
+  ALLOWED_ORIGINS: string;
 }
 
 const env: Env = {
@@ -19,6 +20,7 @@ const env: Env = {
   RABBIT_MQ_URI: process.env.RABBIT_MQ_URI ?? '',
   GMAIL_USER: process.env.GMAIL_USER ?? '',
   GMAIL_PASSWORD: process.env.GMAIL_PASSWORD ?? '',
+  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS ?? '*',
 };
 
 export default env;

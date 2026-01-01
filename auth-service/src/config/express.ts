@@ -20,7 +20,7 @@ export function includeExpressMiddleware(app: Express) {
   //body parser
   app.use(
     cors({
-      origin: 'http://localhost:3000', // your Next.js frontend
+      origin: env.ALLOWED_ORIGINS, // your Next.js frontend
       credentials: true,
     }),
   );
@@ -40,6 +40,6 @@ export function includeExpressRoutes(app: Express) {
 export function startExpressAppServer(app: Express) {
   const PORT: string = env.PORT;
   app.listen(PORT, () => {
-    console.log(`Auth Service is running at http://localhost:${PORT}`);
+    console.log(`Auth Service is running on port:${PORT}`);
   });
 }

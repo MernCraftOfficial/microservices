@@ -18,7 +18,7 @@ const app = express();
 app.use(
   "/user",
   createProxyMiddleware({
-    target: "http://localhost:5001",
+    target: env.AUTH_SERVICE,
     changeOrigin: true,
     pathRewrite: {
       "/": "/user/",
@@ -29,7 +29,7 @@ app.use(
 app.use(
   "/chat",
   createProxyMiddleware({
-    target: "http://localhost:5002", // nginx will be running on port 80
+    target: env.CHAT_SERVICE, // nginx will be running on port 80
     changeOrigin: true,
     pathRewrite: {
       "/": "/chat/",
@@ -46,5 +46,5 @@ app.use((req, res) => {
 });
 
 app.listen(env.PORT, () =>
-  console.log(`API Gateway running at http://localhost:${env.PORT}`)
+  console.log(`API Gateway running on port:${env.PORT}`)
 );
