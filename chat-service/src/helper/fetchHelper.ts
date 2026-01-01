@@ -59,7 +59,6 @@ export async function fetchHelper({
 
   let errorMessage = null;
 
-  console.log(options);
   //fetch
   try {
     const response = await fetch(url, { ...options, credentials: 'include' });
@@ -74,7 +73,6 @@ export async function fetchHelper({
   } catch (error: any) {
     console.error(error.message);
   } finally {
-    console.log(json_response);
     if (errorMessage) {
       return { ...json_response, errorMessage };
     }

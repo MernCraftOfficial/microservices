@@ -15,6 +15,6 @@ export function getHttpServerInstance() {
 export function startHttpServer(server: Server) {
   const PORT: string = env.PORT;
   server.listen(PORT, () => {
-    console.log(`Listening HTTP Server at http://localhost:${PORT}`);
+    console.log(`Listening HTTP Server on port:${PORT}`);
   });
 }

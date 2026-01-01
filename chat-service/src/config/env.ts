@@ -10,6 +10,7 @@ interface Env {
   REDIS_HOST: string;
   REDIS_PORT: number;
   REDIS_PASSWORD: string | null;
+  ALLOWED_ORIGINS: string;
   COOKIE_KEYS: {
     jwt_token: string;
     crypto_token: string;
@@ -30,6 +31,7 @@ const env: Env = {
   REDIS_HOST: process.env.REDIS_HOST ?? '127.0.0.1',
   REDIS_PORT: parseInt(process.env.REDIS_PORT ?? '6379'),
   REDIS_PASSWORD: process.env.REDIS_PASSWORD ?? null,
+  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS ?? '*',
   COOKIE_KEYS: JSON.parse(
     process?.env?.COOKIE_KEYS ?? '{"jwt_token":"token","crypto_token":"token"}',
   ),

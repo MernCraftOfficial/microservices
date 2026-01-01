@@ -31,7 +31,6 @@ export async function verifyCryptoToken(tokenType: string, token: string) {
 export function generateSecureOTP(): string {
   // Generate a number between 100000 and 999999
   const otp = randomInt(100000, 1000000);
-  console.log('OTP :' + otp);
   return otp.toString();
 }
 
