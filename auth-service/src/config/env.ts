@@ -5,6 +5,8 @@ interface Env {
   ENV: string;
   PORT: string;
   MONGO_URI: string;
+  EMAIL_SERVICE: string;
+  RABBIT_MQ_URI: string;
   PASSWORD_PEPPER: string;
   PASSWORD_SALT_WORK_FACTOR: number;
   JWT_AUTH_SECRET: string;
@@ -14,6 +16,7 @@ interface Env {
   COOKIE_KEYS: {
     jwt_token: string;
     crypto_token: string;
+    otp_verified: string;
   };
   REDIS_KEY_PREFIX: {
     account_verfication: string;
@@ -23,8 +26,10 @@ interface Env {
 
 const env: Env = {
   ENV: process.env.ENV ?? 'prod',
-  PORT: process.env.PORT ?? '5000',
+  PORT: process.env.PORT ?? '5001',
   MONGO_URI: process.env.MONGO_URI ?? '',
+  EMAIL_SERVICE: process.env.EMAIL_SERVICE ?? '',
+  RABBIT_MQ_URI: process.env.RABBIT_MQ_URI ?? '',
   PASSWORD_PEPPER: process.env.PASSWORD_PEPPER ?? '',
   PASSWORD_SALT_WORK_FACTOR:
     parseInt(process.env.PASSWORD_SALT_WORK_FACTOR ?? '10') ?? 10,

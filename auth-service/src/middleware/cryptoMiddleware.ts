@@ -6,9 +6,12 @@ import {
   verifyCryptoToken as verifyToken,
 } from '../helper/cryptoHelper';
 import response from '../helper/responseHelper';
-import { destroyRediskey, updateRediskey } from '../config/redis';
+import { updateRediskey } from '../config/redis';
+import { setCookie } from '../helper/cookieHelper';
+import { CryptoRequest } from '../types/commonTypes';
+
 export const verifyCryptoToken = (tokenType: string) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: CryptoRequest, res: Response, next: NextFunction) => {
     const cookieKey = env.COOKIE_KEYS.crypto_token;
     let token = req?.query[cookieKey] ?? '';
 
@@ -33,18 +36,22 @@ export const verifyCryptoToken = (tokenType: string) => {
     }
 
     value = JSON.parse(value);
-    req.body.user = value;
-    req.body.redisKey = generateRedisKey(tokenType, token);
+    req.user = value;
+    req.redisKey = generateRedisKey(tokenType, token);
     next();
   };
 };
 
 export const verifyUserOtp = async (
-  req: Request,
+  req: CryptoRequest,
   res: Response,
   next: NextFunction,
 ) => {
-  const { otp, user, redisKey } = req?.body;
+  const {
+    user,
+    redisKey,
+    body: { otp },
+  } = req;
 
   if (!user?.isOtpVerified) {
     const isOtpVerified = verifyOtp(user, otp);
@@ -52,9 +59,9 @@ export const verifyUserOtp = async (
       response.sendErrorResponse(res, 'BAD_REQUEST', 'Incorrect OTP!');
       return;
     }
-
+    setCookie(res, env?.COOKIE_KEYS?.otp_verified, true);
     updateRediskey(redisKey, JSON.stringify({ ...user, isOtpVerified }));
   }
-  delete user.otp;
+  delete user?.otp;
   next();
 };

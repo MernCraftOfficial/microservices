@@ -10,7 +10,9 @@ import {
   forgotPassword,
   resetPassword,
   signout,
+  getMe,
   otpVerification,
+  getUsersDataByIds,
 } from '../controller/userController';
 import authenticate from '../middleware/jwtMiddleware';
 import {
@@ -29,7 +31,7 @@ userRoute.patch(
   verifyUserOtp,
   verifyAccount,
 );
-userRoute.get('/forgot-password', forgotPassword);
+userRoute.post('/forgot-password', forgotPassword);
 userRoute.post(
   '/verify-otp',
   verifyCryptoToken(env.REDIS_KEY_PREFIX.reset_password),
@@ -38,12 +40,15 @@ userRoute.post(
 );
 userRoute.patch(
   '/reset-password',
+  Validator('reset'),
   verifyCryptoToken(env.REDIS_KEY_PREFIX.reset_password),
   verifyUserOtp,
   resetPassword,
 );
 userRoute.get('/', authenticate, searchUser);
-userRoute.get('/signout', signout);
+userRoute.post('/signout', authenticate, signout);
+userRoute.get('/me', authenticate, getMe);
+userRoute.get('/usersData', authenticate, getUsersDataByIds);
 userRoute.get('/:id', authenticate, getUserById);
 userRoute.post('/:id', authenticate, updateUser);
 

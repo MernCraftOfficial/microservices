@@ -1,13 +1,20 @@
 import jwt from 'jsonwebtoken';
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import env from '../config/env';
 import response from '../helper/responseHelper';
 import { retrieveJwtToken } from '../helper/commonHelper';
-
-const authenticate = (req: Request, res: Response, next: NextFunction) => {
+import { JwtRequest } from '../types/commonTypes';
+import { clearCookies } from '../helper/cookieHelper';
+const authenticate = (req: JwtRequest, res: Response, next: NextFunction) => {
   //get the user from jwt and add id to req object
   try {
-    const token = retrieveJwtToken(req?.header('authorization'));
+    let token = retrieveJwtToken(req?.header('authorization'));
+    const cookieKey = env.COOKIE_KEYS.jwt_token;
+
+    if (!token && req?.cookies) {
+      token = req?.cookies[cookieKey];
+    }
+
     if (!token) {
       response.sendErrorResponse(
         res,
@@ -20,14 +27,16 @@ const authenticate = (req: Request, res: Response, next: NextFunction) => {
     const userData = jwt.verify(token, env.JWT_AUTH_SECRET);
 
     if (!userData || typeof userData == 'string') {
+      clearCookies(res);
       response.sendErrorResponse(res, 'BAD_REQUEST', 'Token does not match!');
       return;
     }
 
-    req.body.user = userData;
+    req.user = userData;
     next();
   } catch (error: any) {
-    response.sendServerError(res, 'INTERNAL_SERVER_ERROR', error.message);
+    clearCookies(res);
+    response.sendServerError(res, 'UNAUTHORIZED', error.message);
     return;
   }
 };
