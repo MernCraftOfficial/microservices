@@ -1,6 +1,7 @@
 import express, { NextFunction, Request, Response } from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import env from "./config/env";
+import cors from "cors";
 
 const app = express();
 
@@ -15,6 +16,24 @@ const app = express();
 // });
 
 // Gateway → Forward to NGINX (not directly to microservices)
+
+const allowedOrigins = env.ALLOWED_ORIGINS?.split(",").map((o) => o.trim());
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  })
+);
+
+app.options("*", cors());
+
 app.use(
   "/user",
   createProxyMiddleware({
