@@ -26,7 +26,7 @@ export function includeExpressMiddleware(app: Express) {
     cors({
       origin: (origin, callback) => {
         if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin)) {
+        if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
           return callback(null, true);
         }
         callback(new Error('Not allowed by CORS'));

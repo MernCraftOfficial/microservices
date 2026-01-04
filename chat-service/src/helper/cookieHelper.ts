@@ -16,7 +16,12 @@ export const setCookie = (
   res.cookie(key, value, {
     httpOnly: true,
     secure: env.ENV == 'dev' ? false : true,
-    sameSite: 'lax',
+    sameSite: env.ENV == 'dev' ? 'lax' : 'none',
+    path: '/',
+    ...(env.ENV == 'dev' || !env.COOKIE_DOMAIN
+      ? {}
+      : { domain: env.COOKIE_DOMAIN }),
+    maxAge: env.ENV == 'dev' ? undefined : 7 * 24 * 60 * 60 * 1000,
   });
   return true;
 };
@@ -25,7 +30,11 @@ export const unsetCookie = (res: Response, key: string) => {
   res.clearCookie(key, {
     httpOnly: true,
     secure: env.ENV == 'dev' ? false : true,
-    sameSite: 'lax',
+    sameSite: env.ENV == 'dev' ? 'lax' : 'none',
+    ...(env.ENV == 'dev' || !env.COOKIE_DOMAIN
+      ? {}
+      : { domain: env.COOKIE_DOMAIN }),
+    path: '/',
   });
   return true;
 };
