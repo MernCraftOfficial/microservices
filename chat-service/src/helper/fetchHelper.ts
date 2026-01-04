@@ -77,6 +77,7 @@ export async function fetchHelper({
       return { ...json_response, errorMessage };
     }
 
+    console.table({ path, options, json_response });
     return json_response;
   }
 }

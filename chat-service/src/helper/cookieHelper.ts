@@ -23,6 +23,8 @@ export const setCookie = (
       : { domain: env.COOKIE_DOMAIN }),
     maxAge: env.ENV == 'dev' ? undefined : 7 * 24 * 60 * 60 * 1000,
   });
+
+  console.table({ type: 'Cookie', key, value });
   return true;
 };
 

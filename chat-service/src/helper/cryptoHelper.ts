@@ -19,6 +19,7 @@ export async function generateCryptoToken(
     JSON.stringify({ _id: userId, otp, isOtpVerified: false }),
   );
   await setRedisExpiry(redisKey);
+  console.log({ type: 'Crypto Token', token, redisKey, otp });
   return token;
 }
 
