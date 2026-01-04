@@ -7,14 +7,26 @@ interface Env {
   AUTH_SERVICE: string;
   CHAT_SERVICE: string;
   ALLOWED_ORIGINS: string;
+  COOKIE_DOMAIN: string;
 }
 
+const requiredEnv = (key: string): string => {
+  const value = process.env[key];
+
+  if (!value) {
+    throw new Error(`Missing Environment Variable :: ${key}`);
+  }
+
+  return value;
+};
+
 const env: Env = {
-  ENV: process.env.ENV ?? "prod",
-  PORT: process.env.PORT ?? "5000",
-  AUTH_SERVICE: process.env.AUTH_SERVICE ?? "",
-  CHAT_SERVICE: process.env.CHAT_SERVICE ?? "",
-  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS ?? "",
+  ENV: requiredEnv("ENV"),
+  PORT: requiredEnv("PORT"),
+  AUTH_SERVICE: requiredEnv("AUTH_SERVICE"),
+  CHAT_SERVICE: requiredEnv("CHAT_SERVICE"),
+  ALLOWED_ORIGINS: requiredEnv("ALLOWED_ORIGINS"),
+  COOKIE_DOMAIN: requiredEnv("COOKIE_DOMAIN"),
 };
 
 export default env;
