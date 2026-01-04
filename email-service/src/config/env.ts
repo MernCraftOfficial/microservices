@@ -10,17 +10,29 @@ interface Env {
   GMAIL_USER: string;
   GMAIL_PASSWORD: string;
   ALLOWED_ORIGINS: string;
+  COOKIE_DOMAIN: string;
 }
 
+const requiredEnv = (key: string): string => {
+  const value = process.env[key];
+
+  if (!value) {
+    throw new Error(`Missing Environment Variable :: ${key}`);
+  }
+
+  return value;
+};
+
 const env: Env = {
-  APP_NAME: process.env.APP_NAME ?? 'App',
-  YEAR: process.env.YEAR ?? '2025',
-  ENV: process.env.ENV ?? 'prod',
-  PORT: process.env.PORT ?? '5003',
-  RABBIT_MQ_URI: process.env.RABBIT_MQ_URI ?? '',
-  GMAIL_USER: process.env.GMAIL_USER ?? '',
-  GMAIL_PASSWORD: process.env.GMAIL_PASSWORD ?? '',
-  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS ?? '*',
+  APP_NAME: requiredEnv('APP_NAME'),
+  YEAR: requiredEnv('YEAR'),
+  ENV: requiredEnv('ENV'),
+  PORT: requiredEnv('PORT'),
+  RABBIT_MQ_URI: requiredEnv('RABBIT_MQ_URI'),
+  GMAIL_USER: requiredEnv('GMAIL_USER'),
+  GMAIL_PASSWORD: requiredEnv('GMAIL_PASSWORD'),
+  ALLOWED_ORIGINS: requiredEnv('ALLOWED_ORIGINS'),
+  COOKIE_DOMAIN: requiredEnv('COOKIE_DOMAIN'),
 };
 
 export default env;

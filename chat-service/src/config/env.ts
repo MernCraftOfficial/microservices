@@ -11,6 +11,7 @@ interface Env {
   REDIS_PORT: number;
   REDIS_PASSWORD: string | null;
   ALLOWED_ORIGINS: string;
+  COOKIE_DOMAIN: string;
   COOKIE_KEYS: {
     jwt_token: string;
     crypto_token: string;
@@ -22,23 +23,29 @@ interface Env {
   };
 }
 
+const requiredEnv = (key: string): string => {
+  const value = process.env[key];
+
+  if (!value) {
+    throw new Error(`Missing Environment Variable :: ${key}`);
+  }
+
+  return value;
+};
+
 const env: Env = {
-  AUTH_SERVICE: process.env.AUTH_SERVICE ?? '',
-  ENV: process.env.ENV ?? 'prod',
-  PORT: process.env.PORT ?? '5002',
-  MONGO_URI: process.env.MONGO_URI ?? '',
-  JWT_AUTH_SECRET: process.env.JWT_AUTH_SECRET ?? '',
-  REDIS_HOST: process.env.REDIS_HOST ?? '127.0.0.1',
-  REDIS_PORT: parseInt(process.env.REDIS_PORT ?? '6379'),
-  REDIS_PASSWORD: process.env.REDIS_PASSWORD ?? null,
-  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS ?? '*',
-  COOKIE_KEYS: JSON.parse(
-    process?.env?.COOKIE_KEYS ?? '{"jwt_token":"token","crypto_token":"token"}',
-  ),
-  REDIS_KEY_PREFIX: JSON.parse(
-    process?.env?.REDIS_KEY_PREFIX ??
-      '{"account_verfication":"account_verfication","reset_password":"reset_password"}',
-  ),
+  AUTH_SERVICE: requiredEnv('AUTH_SERVICE'),
+  ENV: requiredEnv('ENV'),
+  PORT: requiredEnv('PORT'),
+  MONGO_URI: requiredEnv('MONGO_URI'),
+  JWT_AUTH_SECRET: requiredEnv('JWT_AUTH_SECRET'),
+  REDIS_HOST: requiredEnv('REDIS_HOST'),
+  REDIS_PORT: parseInt(requiredEnv('REDIS_PORT')),
+  REDIS_PASSWORD: requiredEnv('REDIS_PASSWORD'),
+  ALLOWED_ORIGINS: requiredEnv('ALLOWED_ORIGINS'),
+  COOKIE_DOMAIN: requiredEnv('COOKIE_DOMAIN'),
+  COOKIE_KEYS: JSON.parse(requiredEnv('COOKIE_KEYS')),
+  REDIS_KEY_PREFIX: JSON.parse(requiredEnv('REDIS_KEY_PREFIX')),
 };
 
 export default env;
