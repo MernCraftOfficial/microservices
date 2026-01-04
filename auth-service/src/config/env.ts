@@ -13,7 +13,6 @@ interface Env {
   REDIS_HOST: string;
   REDIS_PORT: number;
   REDIS_PASSWORD: string | null;
-  ALLOWED_ORIGINS: string;
   COOKIE_DOMAIN: string;
   COOKIE_KEYS: {
     jwt_token: string;
@@ -48,7 +47,6 @@ const env: Env = {
   REDIS_HOST: requiredEnv('REDIS_HOST'),
   REDIS_PORT: parseInt(requiredEnv('REDIS_PORT')),
   REDIS_PASSWORD: requiredEnv('REDIS_PASSWORD'),
-  ALLOWED_ORIGINS: requiredEnv('ALLOWED_ORIGINS'),
   COOKIE_DOMAIN: requiredEnv('COOKIE_DOMAIN'),
   COOKIE_KEYS: JSON.parse(requiredEnv('COOKIE_KEYS')),
   REDIS_KEY_PREFIX: JSON.parse(requiredEnv('REDIS_KEY_PREFIX')),

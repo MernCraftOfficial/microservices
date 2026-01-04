@@ -33,7 +33,7 @@ export const sendEmail = (
   });
 
   // handlebar middleware for templates
-  const templatesDir = path.join(__dirname, '..', 'templates');
+  const templatesDir = path.join(process.cwd(), 'templates');
 
   tranporter.use(
     'compile',
