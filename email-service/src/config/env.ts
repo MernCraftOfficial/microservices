@@ -9,7 +9,6 @@ interface Env {
   RABBIT_MQ_URI: string;
   GMAIL_USER: string;
   GMAIL_PASSWORD: string;
-  COOKIE_DOMAIN: string;
 }
 
 const requiredEnv = (key: string): string => {
@@ -30,7 +29,6 @@ const env: Env = {
   RABBIT_MQ_URI: requiredEnv('RABBIT_MQ_URI'),
   GMAIL_USER: requiredEnv('GMAIL_USER'),
   GMAIL_PASSWORD: requiredEnv('GMAIL_PASSWORD'),
-  COOKIE_DOMAIN: requiredEnv('COOKIE_DOMAIN'),
 };
 
 export default env;

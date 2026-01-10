@@ -35,7 +35,7 @@ app.use(
 app.options("/{*any}", cors());
 
 app.use(
-  "/user",
+  "/api/user",
   createProxyMiddleware({
     target: env.AUTH_SERVICE,
     changeOrigin: true,
@@ -46,7 +46,7 @@ app.use(
 );
 
 app.use(
-  "/chat",
+  "/api/chat",
   createProxyMiddleware({
     target: env.CHAT_SERVICE, // nginx will be running on port 80
     changeOrigin: true,

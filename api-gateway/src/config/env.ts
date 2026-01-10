@@ -7,7 +7,6 @@ interface Env {
   AUTH_SERVICE: string;
   CHAT_SERVICE: string;
   ALLOWED_ORIGINS: string;
-  COOKIE_DOMAIN: string;
 }
 
 const requiredEnv = (key: string): string => {
@@ -26,7 +25,6 @@ const env: Env = {
   AUTH_SERVICE: requiredEnv("AUTH_SERVICE"),
   CHAT_SERVICE: requiredEnv("CHAT_SERVICE"),
   ALLOWED_ORIGINS: requiredEnv("ALLOWED_ORIGINS"),
-  COOKIE_DOMAIN: requiredEnv("COOKIE_DOMAIN"),
 };
 
 export default env;
