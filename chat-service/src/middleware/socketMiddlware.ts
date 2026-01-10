@@ -6,13 +6,17 @@ import { parseCookies } from '../helper/cookieHelper';
 const authenticate = (socket: Socket, next: (error?: any) => void) => {
   //get the user from jwt and add id to req object
   try {
-    let token = retrieveJwtToken(socket?.request?.headers?.authorization);
+    let token = null;
     const cookieKey = env.COOKIE_KEYS.jwt_token;
 
-    let cookies = parseCookies(socket?.request?.headers?.cookie || '');
-    if (!token && cookies) {
-      token = cookies[cookieKey];
+    if (socket?.handshake?.query && socket?.handshake?.query[cookieKey]) {
+      token = retrieveJwtToken(socket?.handshake?.query[cookieKey] as string);
     }
+
+    // let cookies = parseCookies(socket?.request?.headers?.cookie || '');
+    // if (!token && cookies) {
+    //   token = cookies[cookieKey];
+    // }
 
     if (!token) {
       return next(new Error('Authenticate using a valid token'));

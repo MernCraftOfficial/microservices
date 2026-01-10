@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import {
   extractUsername,
   removeKey,
+  retrieveJwtToken,
   sanitizeSearch,
 } from '../helper/commonHelper';
 import tryCatchErrorHandler from '../helper/tryCatchHelper';
@@ -421,7 +422,18 @@ export const getMe = tryCatchErrorHandler(
         return;
       }
 
-      response.sendSuccessResponse(res, 'OK', getUser);
+      let token = retrieveJwtToken(req?.header('authorization'));
+      const cookieKey = env.COOKIE_KEYS.jwt_token;
+
+      if (!token && req?.cookies) {
+        token = req?.cookies[cookieKey];
+      }
+
+      response.sendSuccessResponse(res, 'OK', {
+        ...removeKey.apply(getUser.toObject(), ['password', '__v']),
+        [env.COOKIE_KEYS?.jwt_token]: token,
+      });
+
       return;
     } catch (error: any) {
       response.sendErrorResponse(res, 'BAD_REQUEST', error.message);
