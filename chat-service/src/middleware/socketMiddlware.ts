@@ -13,10 +13,10 @@ const authenticate = (socket: Socket, next: (error?: any) => void) => {
       token = retrieveJwtToken(socket?.handshake?.query[cookieKey] as string);
     }
 
-    // let cookies = parseCookies(socket?.request?.headers?.cookie || '');
-    // if (!token && cookies) {
-    //   token = cookies[cookieKey];
-    // }
+    let cookies = parseCookies(socket?.request?.headers?.cookie || '');
+    if (!token && cookies) {
+      token = cookies[cookieKey];
+    }
 
     if (!token) {
       return next(new Error('Authenticate using a valid token'));
