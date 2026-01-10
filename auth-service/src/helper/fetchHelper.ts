@@ -1,4 +1,5 @@
 import env from '../config/env';
+import { requestContext } from '../lib/requestContext';
 
 type Methods = 'POST' | 'GET' | 'PUT' | 'PATCH' | 'OPTIONS' | 'HEAD' | 'DELETE';
 export interface Response {
@@ -20,10 +21,21 @@ export async function fetchHelper({
   path: string;
   options: fetchProps;
 }) {
+  const ctx = requestContext.getStore();
+
   //validate headers
+  if (options.headers) {
+    options.headers = {
+      ...options.headers,
+      'Content-Type': 'application/json',
+      ...(ctx ? ctx : {}),
+    };
+  }
+
   if (!options.headers) {
     options.headers = {
       'Content-Type': 'application/json',
+      ...(ctx ? ctx : {}),
     };
   }
 

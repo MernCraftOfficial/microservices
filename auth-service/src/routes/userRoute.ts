@@ -14,7 +14,7 @@ import {
   otpVerification,
   getUsersDataByIds,
 } from '../controller/userController';
-import authenticate from '../middleware/jwtMiddleware';
+import gatewayAuth from '../middleware/gatewayAuth';
 import {
   verifyCryptoToken,
   verifyUserOtp,
@@ -23,33 +23,33 @@ import env from '../config/env';
 
 const userRoute = Router();
 
-userRoute.post('/signin', Validator('signin'), signin);
-userRoute.post('/signup', Validator('signup'), signup);
+userRoute.post('/public/signin', Validator('signin'), signin);
+userRoute.post('/public/signup', Validator('signup'), signup);
 userRoute.patch(
-  '/verify-account',
+  '/public/verify-account',
   verifyCryptoToken(env.REDIS_KEY_PREFIX.account_verfication),
   verifyUserOtp,
   verifyAccount,
 );
-userRoute.post('/forgot-password', forgotPassword);
+userRoute.post('/public/forgot-password', forgotPassword);
 userRoute.post(
-  '/verify-otp',
+  '/public/verify-otp',
   verifyCryptoToken(env.REDIS_KEY_PREFIX.reset_password),
   verifyUserOtp,
   otpVerification,
 );
 userRoute.patch(
-  '/reset-password',
+  '/public/reset-password',
   Validator('reset'),
   verifyCryptoToken(env.REDIS_KEY_PREFIX.reset_password),
   verifyUserOtp,
   resetPassword,
 );
-userRoute.get('/', authenticate, searchUser);
-userRoute.post('/signout', authenticate, signout);
-userRoute.get('/me', authenticate, getMe);
-userRoute.get('/usersData', authenticate, getUsersDataByIds);
-userRoute.get('/:id', authenticate, getUserById);
-userRoute.post('/:id', authenticate, updateUser);
+userRoute.get('/', gatewayAuth, searchUser);
+userRoute.post('/signout', gatewayAuth, signout);
+userRoute.get('/me', gatewayAuth, getMe);
+userRoute.get('/usersData', gatewayAuth, getUsersDataByIds);
+userRoute.get('/:id', gatewayAuth, getUserById);
+userRoute.post('/:id', gatewayAuth, updateUser);
 
 export default userRoute;

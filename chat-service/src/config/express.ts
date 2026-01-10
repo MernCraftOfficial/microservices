@@ -5,7 +5,7 @@ import env from './env';
 import pageNotFound from './404';
 import { syntaxErrorHandler } from '../middleware/errorHandlerMiddleware';
 import messageRoute from '../routes/messageRoute';
-import authenticate from '../middleware/jwtMiddleware';
+import gatewayAuth from '../middleware/gatewayAuth';
 import userRelationRoute from '../routes/userRelationsRoute';
 
 let app: null | Express = null;
@@ -26,7 +26,7 @@ export function includeExpressMiddleware(app: Express) {
 }
 
 export function includeExpressRoutes(app: Express) {
-  app.use(authenticate);
+  app.use(gatewayAuth);
   app.use('/chat', userRelationRoute);
   app.use('/chat', messageRoute);
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {

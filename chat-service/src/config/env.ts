@@ -10,6 +10,7 @@ interface Env {
   REDIS_HOST: string;
   REDIS_PORT: number;
   REDIS_PASSWORD: string | null;
+  GATEWAY_SECRET: string;
   COOKIE_KEYS: {
     jwt_token: string;
     crypto_token: string;
@@ -42,6 +43,7 @@ const env: Env = {
   REDIS_PASSWORD: requiredEnv('REDIS_PASSWORD'),
   COOKIE_KEYS: JSON.parse(requiredEnv('COOKIE_KEYS')),
   REDIS_KEY_PREFIX: JSON.parse(requiredEnv('REDIS_KEY_PREFIX')),
+  GATEWAY_SECRET: requiredEnv('GATEWAY_SECRET'),
 };
 
 export default env;

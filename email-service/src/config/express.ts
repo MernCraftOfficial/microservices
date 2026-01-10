@@ -3,6 +3,7 @@ import { urlencoded, json } from 'express';
 import env from './env';
 import pageNotFound from './404';
 import emailRoute from '../routes/emailRoute';
+import { syntaxErrorHandler } from '../middleware/errorHandlerMiddleware';
 
 let app: null | Express = null;
 export function getExpressApp() {
@@ -17,6 +18,7 @@ export function includeExpressMiddleware(app: Express) {
   //body parser
   app.use(urlencoded({ extended: false }));
   app.use(json());
+  app.use(syntaxErrorHandler);
 }
 
 export function includeExpressRoutes(app: Express) {

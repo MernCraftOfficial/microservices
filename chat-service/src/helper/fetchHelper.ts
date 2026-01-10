@@ -1,6 +1,5 @@
 import env from '../config/env';
 import { requestContext } from '../lib/requestContext';
-
 type Methods = 'POST' | 'GET' | 'PUT' | 'PATCH' | 'OPTIONS' | 'HEAD' | 'DELETE';
 export interface Response {
   success: boolean;
@@ -22,6 +21,7 @@ export async function fetchHelper({
   options: fetchProps;
 }) {
   //validate headers
+  const ctx = requestContext.getStore();
 
   if (options?.headers) {
     options.headers = {
@@ -31,17 +31,14 @@ export async function fetchHelper({
   }
 
   if (!options.headers) {
-    const ctx = requestContext.getStore();
-    const token = ctx?.token || '';
-
     options.headers = {
       'Content-Type': 'application/json',
     };
 
-    if (token) {
+    if (ctx) {
       options.headers = {
         ...options?.headers,
-        authorization: `Bearer ${token}`,
+        ...ctx,
       };
     }
   }
