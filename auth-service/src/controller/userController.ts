@@ -42,8 +42,7 @@ export const signin = tryCatchErrorHandler(
       );
       return;
     }
-
-    if (!userDetails?.isVerified) {
+    if (!env.BYPASS_VERIFICATION && !userDetails?.isVerified) {
       const accountVerificationToken = await generateCryptoToken(
         env.REDIS_KEY_PREFIX.account_verfication,
         userDetails?._id,
@@ -124,30 +123,40 @@ export const signup = tryCatchErrorHandler(
         return;
       }
 
-      const accountVerificationToken = await generateCryptoToken(
-        env.REDIS_KEY_PREFIX.account_verfication,
-        userId,
-      );
+      if (!env.BYPASS_VERIFICATION) {
+        const accountVerificationToken = await generateCryptoToken(
+          env.REDIS_KEY_PREFIX.account_verfication,
+          userId,
+        );
 
-      setCookie(
-        res,
-        env.COOKIE_KEYS.crypto_token,
-        accountVerificationToken?.token,
-      );
+        setCookie(
+          res,
+          env.COOKIE_KEYS.crypto_token,
+          accountVerificationToken?.token,
+        );
 
-      //send email
-      emailService.sendEmail({
-        receiverEmail: email,
-        emailTemplate: 'account-verification',
-        subject: 'Verify Your Account',
-        context: {
-          name: extractedUsername?.firstname,
-          otp: accountVerificationToken?.otp,
-        },
-      });
+        //send email
+        emailService.sendEmail({
+          receiverEmail: email,
+          emailTemplate: 'account-verification',
+          subject: 'Verify Your Account',
+          context: {
+            name: extractedUsername?.firstname,
+            otp: accountVerificationToken?.otp,
+          },
+        });
 
+        response.sendSuccessResponse(res, 'OK', {
+          token: accountVerificationToken?.token,
+        });
+        return;
+      }
+
+      const accessToken = createAuthToken({ _id: newUser?._id });
+      setCookie(res, env.COOKIE_KEYS?.jwt_token, accessToken);
       response.sendSuccessResponse(res, 'OK', {
-        token: accountVerificationToken?.token,
+        ...removeKey.apply(newUser.toObject(), ['password', '__v']),
+        [env.COOKIE_KEYS?.jwt_token]: accessToken,
       });
       return;
     } catch (error: any) {
@@ -202,7 +211,7 @@ export const forgotPassword = tryCatchErrorHandler(
       response.sendErrorResponse(
         res,
         'NOT_FOUND',
-        'Please enter correct email!',
+        'Please enter correct email or use verified email!',
       );
       return;
     }
