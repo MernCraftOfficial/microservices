@@ -28,6 +28,7 @@ export const sendEmail = tryCatchErrorHandler(
       context: context,
     };
 
+    console.table(emailData);
     mailer.sendEmail(emailData, (error: any, info: any) => {
       if (error) {
         response.sendErrorResponse(

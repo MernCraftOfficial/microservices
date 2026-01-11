@@ -58,6 +58,8 @@ export const sendEmail = (
     context: { ...context, appName: env?.APP_NAME, year: env?.YEAR },
   };
 
+  console.table(mailOptions);
+
   tranporter.sendMail(mailOptions, (error, info) => {
     if (error) {
       callback(error, null);
