@@ -1,8 +1,7 @@
-import { JwtPayload } from 'jsonwebtoken';
 import { Request } from 'express';
 
 export interface JwtRequest extends Request {
-  user?: JwtPayload;
+  user?: { _id: string };
 }
 
 export interface CryptoRequest extends Request {
