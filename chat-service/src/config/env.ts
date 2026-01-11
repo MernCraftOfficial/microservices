@@ -11,6 +11,7 @@ interface Env {
   REDIS_PORT: number;
   REDIS_PASSWORD: string | null;
   GATEWAY_SECRET: string;
+  ALLOWED_ORIGINS: string | undefined;
   COOKIE_KEYS: {
     jwt_token: string;
     crypto_token: string;
@@ -44,6 +45,7 @@ const env: Env = {
   COOKIE_KEYS: JSON.parse(requiredEnv('COOKIE_KEYS')),
   REDIS_KEY_PREFIX: JSON.parse(requiredEnv('REDIS_KEY_PREFIX')),
   GATEWAY_SECRET: requiredEnv('GATEWAY_SECRET'),
+  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
 };
 
 export default env;
