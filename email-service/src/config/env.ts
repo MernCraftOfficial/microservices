@@ -7,9 +7,10 @@ interface Env {
   YEAR: string;
   PORT: string;
   RABBIT_MQ_URI: string;
-  GMAIL_USER: string;
+  EMAIL_USER: string;
   GATEWAY_SECRET: string;
-  GMAIL_PASSWORD: string;
+  EMAIL_PASSWORD: string;
+  EMAIL_FROM: string;
 }
 
 const requiredEnv = (key: string): string => {
@@ -28,9 +29,10 @@ const env: Env = {
   ENV: requiredEnv('ENV'),
   PORT: requiredEnv('PORT'),
   RABBIT_MQ_URI: requiredEnv('RABBIT_MQ_URI'),
-  GMAIL_USER: requiredEnv('GMAIL_USER'),
-  GMAIL_PASSWORD: requiredEnv('GMAIL_PASSWORD'),
+  EMAIL_USER: requiredEnv('EMAIL_USER'),
+  EMAIL_PASSWORD: requiredEnv('EMAIL_PASSWORD'),
   GATEWAY_SECRET: requiredEnv('GATEWAY_SECRET'),
+  EMAIL_FROM: requiredEnv('EMAIL_FROM'),
 };
 
 export default env;

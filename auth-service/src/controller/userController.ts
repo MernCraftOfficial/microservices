@@ -9,13 +9,14 @@ import {
 import tryCatchErrorHandler from '../helper/tryCatchHelper';
 import { createAuthToken } from '../helper/jwtHelper';
 import response from '../helper/responseHelper';
-import { generateCryptoToken } from '../helper/cryptoHelper';
+import { generateCryptoToken, generateSecureOTP } from '../helper/cryptoHelper';
 import { clearCookies, setCookie, unsetCookie } from '../helper/cookieHelper';
 import env from '../config/env';
-import { destroyRediskey } from '../config/redis';
+import { destroyRediskey, getRedisKey, updateRediskey } from '../config/redis';
 import { CryptoRequest, JwtRequest } from '../types/commonTypes';
 import logger from '../config/winston';
 import emailService from '../services/emailService';
+import { RedisKey } from 'ioredis';
 
 export const signin = tryCatchErrorHandler(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -158,7 +159,7 @@ export const signup = tryCatchErrorHandler(
 export const verifyAccount = tryCatchErrorHandler(
   async (req: CryptoRequest, res: Response, next: NextFunction) => {
     //redis otp validation pending
-    const user = req?.user;
+    const { user = null, redisKey } = req;
     const isVerified = await User.findByIdAndUpdate(
       user?._id,
       { $set: { isVerified: true } },
@@ -169,9 +170,9 @@ export const verifyAccount = tryCatchErrorHandler(
       throw new Error('Something went wrong!');
     }
 
-    unsetCookie(res, env.REDIS_KEY_PREFIX.account_verfication);
+    destroyRediskey(redisKey);
+    unsetCookie(res, env?.COOKIE_KEYS?.crypto_token);
     unsetCookie(res, env?.COOKIE_KEYS?.otp_verified);
-
     const accessToken = createAuthToken({ _id: user?._id });
     setCookie(res, env.COOKIE_KEYS?.jwt_token, accessToken);
 
@@ -235,6 +236,53 @@ export const forgotPassword = tryCatchErrorHandler(
 export const otpVerification = tryCatchErrorHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     response.sendSuccessResponse(res, 'OK', 'OTP successfully matched!');
+    return;
+  },
+);
+
+export const resendOtp = tryCatchErrorHandler(
+  async (req: CryptoRequest, res: Response, next: NextFunction) => {
+    let { user = null, redisKey = null } = req;
+
+    let redisData: any = await getRedisKey(redisKey as RedisKey);
+    redisData = JSON.parse(redisData ?? '');
+
+    const userDetails = await User.findOne(
+      { _id: user?._id },
+      { email: 1, _id: 0 },
+    );
+
+    if (!userDetails?.email || !redisData) {
+      response.sendErrorResponse(
+        res,
+        'NOT_FOUND',
+        'User email cannot be found!',
+      );
+      return;
+    }
+
+    const otp = generateSecureOTP();
+
+    await updateRediskey(
+      redisKey as RedisKey,
+      JSON.stringify({
+        ...redisData,
+        otp,
+      }),
+    );
+
+    //send email
+    emailService.sendEmail({
+      receiverEmail: userDetails.email,
+      emailTemplate: 'account-verification',
+      subject: 'Verify Your Account',
+      context: {
+        name: userDetails?.username?.firstname,
+        otp: otp,
+      },
+    });
+
+    response.sendSuccessResponse(res, 'OK', 'OTP successfully resent!');
     return;
   },
 );

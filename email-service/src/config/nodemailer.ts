@@ -19,16 +19,17 @@ export const sendEmail = (
   { receiverEmail, emailTemplate, context, subject }: EmailProps,
   callback: Function,
 ) => {
-  const sender = env.GMAIL_USER;
-  const password = env.GMAIL_PASSWORD;
+  const email_user = env.EMAIL_USER;
+  const email_from = env.EMAIL_FROM;
+  const email_password = env.EMAIL_PASSWORD;
   const tranporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
-    port: 465,
+    service: 'resend',
+    host: 'smtp.resend.com',
+    port: 587,
     secure: true,
     auth: {
-      user: sender,
-      pass: password,
+      user: email_user,
+      pass: email_password,
     },
   });
 
@@ -50,7 +51,7 @@ export const sendEmail = (
   );
 
   const mailOptions: HbsMailOptions = {
-    from: sender,
+    from: email_from,
     to: receiverEmail,
     subject: subject,
     template: emailTemplate,

@@ -10,7 +10,7 @@ import { updateRediskey } from '../config/redis';
 import { setCookie } from '../helper/cookieHelper';
 import { CryptoRequest } from '../types/commonTypes';
 
-export const verifyCryptoToken = (tokenType: string) => {
+export const verifyCryptoToken = (tokenType?: string) => {
   return async (req: CryptoRequest, res: Response, next: NextFunction) => {
     const cookieKey = env.COOKIE_KEYS.crypto_token;
     let token = req?.query[cookieKey] ?? '';
@@ -26,6 +26,20 @@ export const verifyCryptoToken = (tokenType: string) => {
         'Token is mandatory and must be string!',
       );
       return;
+    }
+
+    if (!tokenType) {
+      const type = req?.query?.['type'];
+      switch (type) {
+        case 'verify-account':
+          tokenType = env.REDIS_KEY_PREFIX.account_verfication;
+          break;
+        case 'verify-otp':
+          tokenType = env.REDIS_KEY_PREFIX.reset_password;
+          break;
+        default:
+          throw new Error('Invalid Token Type!');
+      }
     }
 
     let value: any = await verifyToken(tokenType, token);

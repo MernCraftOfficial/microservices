@@ -13,6 +13,7 @@ import {
   getMe,
   otpVerification,
   getUsersDataByIds,
+  resendOtp,
 } from '../controller/userController';
 import gatewayAuth from '../middleware/gatewayAuth';
 import {
@@ -38,6 +39,8 @@ userRoute.post(
   verifyUserOtp,
   otpVerification,
 );
+
+userRoute.get('/public/resend-otp', verifyCryptoToken(), resendOtp);
 userRoute.patch(
   '/public/reset-password',
   Validator('reset'),
