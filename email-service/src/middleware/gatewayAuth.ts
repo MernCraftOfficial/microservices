@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { verifySignature } from '../helper/cryptoHelper';
-import { JwtRequest } from '../types/commonTypes';
+import { JwtRequest, UserPayload } from '../types/commonTypes';
 import env from '../config/env';
 import { requestContext } from '../lib/requestContext';
 
@@ -27,7 +27,7 @@ export default function gatewayAuth(
   }
 
   try {
-    req.user = JSON.parse(payload as string);
+    req.user = JSON.parse(payload as string) as UserPayload;
 
     requestContext.run(
       {

@@ -1,7 +1,11 @@
 import { Request } from 'express';
 
 export interface JwtRequest extends Request {
-  user?: { _id: string };
+  user?: UserPayload;
+}
+
+export interface UserPayload {
+  [key: string]: any;
 }
 
 export interface CryptoRequest extends Request {
