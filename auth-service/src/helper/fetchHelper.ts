@@ -51,6 +51,8 @@ export async function fetchHelper({
   const url = env?.EMAIL_SERVICE + (path ?? '');
 
   let errorMessage = null;
+  console.table({ url, options });
+
   //fetch
   try {
     const response = await fetch(url, { ...options, credentials: 'include' });
