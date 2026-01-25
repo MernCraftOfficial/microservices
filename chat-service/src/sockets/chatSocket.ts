@@ -5,6 +5,7 @@ import messageRepository, {
   updateMessage,
 } from '../repository/messageRepository';
 import authenticate from '../middleware/socketMiddlware';
+import userRelationsRepository from '../repository/userRelationsRepository';
 let chatSocketNamespace: Namespace | null = null;
 export function startChatSocket() {
   chatSocketNamespace = createSocketNamespace('/uchat');
@@ -114,6 +115,26 @@ function onPrivateChat(socket: Socket) {
       receiver: userId,
       messageStatus: 'read',
     });
+  });
+
+  socket.on('friendRequestStatusChange', async (data, ack) => {
+    const dataToUpdate = {
+      _id: data?.userRelationId,
+      entityId: userId,
+      status: data?.status,
+    };
+
+    const updateRelation =
+      await userRelationsRepository.updateUserRelationStatus(dataToUpdate);
+
+    if (!updateRelation) {
+      ack?.('Unable to update request status!');
+      return;
+    }
+
+    chatSocketNamespace
+      ?.to(data?.entityId)
+      .emit('onFriendRequestStatusChange', data);
   });
 }
 

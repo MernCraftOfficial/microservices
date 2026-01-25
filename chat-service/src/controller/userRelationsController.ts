@@ -3,7 +3,6 @@ import tryCatchErrorHandler from '../helper/tryCatchHelper';
 import response from '../helper/responseHelper';
 import { JwtRequest } from '../types/commonTypes';
 import UserRelationsRepository from '../repository/userRelationsRepository';
-import { fetchHelper } from '../helper/fetchHelper';
 import userService from '../services/userService';
 
 export const createUserRelation = tryCatchErrorHandler(
@@ -61,12 +60,30 @@ export const getUserRelations = tryCatchErrorHandler(
       }
 
       let ids: string[] = [];
-      let responseData: any = userRelations.map((relation) => {
-        ids.push(relation?.entityId?.toString());
+      let responseData: any = userRelations?.map((relation) => {
+        if (userId == relation?.entityId?.toString()) {
+          ids.push(relation?.userId?.toString());
+        } else {
+          ids.push(relation?.entityId?.toString());
+        }
+
+        let unreadMessages = 0;
+        let lastMessage = null;
+
+        if (relation?.unreadMessages?.user == userId) {
+          unreadMessages = relation?.unreadMessages?.count ?? 0;
+        }
+
+        if (relation?.lastMessage?.user == userId) {
+          lastMessage = relation?.lastMessage?.message ?? null;
+        }
+
         return {
+          userRelationId: relation?._id?.toString(),
+          requestSentBy: relation?.userId?.toString(),
           requestStatus: relation?.status ?? '',
-          unreadMessages: relation?.unreadMessages,
-          lastMessage: relation?.lastMessage,
+          unreadMessages,
+          lastMessage,
         };
       });
 

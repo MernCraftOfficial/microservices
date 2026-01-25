@@ -23,18 +23,18 @@ const userRelationsSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ['pending', 'accepted', 'blocked', 'member'],
+      enum: ['pending', 'accepted', 'blocked'],
       default: 'pending',
     },
 
     unreadMessages: {
-      type: Number,
-      default: 0,
+      user: { type: String, default: null },
+      count: { type: Number, default: 0 },
     },
 
     lastMessage: {
-      type: String,
-      default: null,
+      user: { type: String, default: null },
+      message: { type: String, default: 0 },
     },
 
     role: {
