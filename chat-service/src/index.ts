@@ -4,7 +4,7 @@ import {
   includeExpressRoutes,
 } from './config/express';
 
-import { startChatSocket } from './sockets/chatSocket';
+import { initChatSocket } from './sockets/chatSocket';
 import { connectToMongoDb } from './config/db';
 import { getRedisClient } from './config/redis';
 import { startHttpServer } from './config/http';
@@ -20,7 +20,7 @@ async function init() {
   getRedisClient();
 
   //sockets
-  startChatSocket();
+  initChatSocket();
 
   //middlewares
   includeExpressMiddleware(app);

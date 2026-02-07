@@ -1,8 +1,9 @@
-import { Server } from 'socket.io';
+import { Namespace, Server } from 'socket.io';
 import { getHttpServerInstance } from './http';
 import env from './env';
 
 let io: Server | null = null;
+let chatSocketNamespace: Namespace | null = null;
 export function getSocketInstance() {
   if (!io) {
     const httpServer = getHttpServerInstance();

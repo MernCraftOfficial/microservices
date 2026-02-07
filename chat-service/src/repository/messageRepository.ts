@@ -6,11 +6,16 @@ export const createMessage = async (data: any) => {
     sender: data?.sender,
     receiver: data?.receiver,
     messageStatus: data?.messageStatus,
-    messageType: data?.messaageType,
+    messageType: data?.messageType,
     createdAt: data?.createdAt,
     updatedAt: data?.updatedAt,
     receivedAt: data?.receivedAt,
   };
+
+  if (data?.sender == data?.receiver) {
+    message.messageStatus = 'read';
+    message.receivedAt = message.createdAt;
+  }
 
   const newMessage = await Message.create(message);
   const messageId = newMessage?._id?.toString();
@@ -96,13 +101,13 @@ export const deleteWholeChat = async ({
   return deletedChat;
 };
 
-export const markMessagesReceived = async (
+export const markMessagesDelivered = async (
   receiverId: string,
   receivedAt: string = new Date().toISOString(),
 ) => {
   const markReceived = await Message.updateMany(
     { receiver: receiverId, messageStatus: 'sent' },
-    { $set: { messageStatus: 'received', receivedAt } },
+    { $set: { messageStatus: 'delivered', receivedAt } },
     { runValidators: true },
   );
 
@@ -129,12 +134,26 @@ export const markMessagesRead = async (data: any) => {
   return markReceived;
 };
 
+export const getDistinctSenders = async (receiverId: string) => {
+  const distinctSenders = await Message.distinct('sender', {
+    receiver: receiverId,
+    status: 'delivered',
+  });
+
+  if (!distinctSenders || distinctSenders?.length == 0) {
+    return false;
+  }
+
+  return distinctSenders;
+};
+
 export default {
   createMessage,
   updateMessage,
   getMessages,
   deleteMessageById,
   deleteWholeChat,
-  markMessagesReceived,
+  markMessagesDelivered,
   markMessagesRead,
+  getDistinctSenders,
 };

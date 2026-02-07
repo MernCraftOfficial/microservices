@@ -4,10 +4,13 @@ import response from '../helper/responseHelper';
 import { JwtRequest } from '../types/commonTypes';
 import UserRelationsRepository from '../repository/userRelationsRepository';
 import userService from '../services/userService';
+import { getChatSocket } from '../sockets/chatSocket';
+import { getChatSocketKey } from '../helper/socketHelper';
+import logger from '../config/winston';
 
 export const createUserRelation = tryCatchErrorHandler(
   async (req: JwtRequest, res: Response, next: NextFunction) => {
-    const userId = req?.user?._id;
+    const participantA = req?.user?._id;
     let userRelation = req?.body;
 
     if (userRelation?.relationType == 'friend') {
@@ -16,7 +19,7 @@ export const createUserRelation = tryCatchErrorHandler(
       userRelation.role = 'member';
     }
 
-    userRelation = { ...userRelation, userId };
+    userRelation = { ...userRelation, participantA };
 
     try {
       const newUserRelation =
@@ -28,6 +31,42 @@ export const createUserRelation = tryCatchErrorHandler(
           'INTERNAL_SERVER_ERROR',
           'Something went wrong!',
         );
+        return;
+      }
+
+      const userServiceResponse = await userService.getFriendsDataByIds([
+        participantA,
+        userRelation?.participantB,
+      ]);
+
+      const relationData = {
+        relationId: newUserRelation?._id,
+        requestedBy: newUserRelation?.requestedBy,
+        requestStatus: newUserRelation?.status,
+      };
+
+      if (userServiceResponse.success) {
+        const chatSocket = getChatSocket();
+        chatSocket.to(getChatSocketKey(participantA)).emit('friendRequest', {
+          ...userServiceResponse?.data?.filter((user: any) => {
+            if (user?._id != participantA) {
+              return true;
+            }
+            return false;
+          })?.[0],
+          ...relationData,
+        });
+        chatSocket
+          .to(getChatSocketKey(userRelation?.participantB))
+          .emit('friendRequest', {
+            ...relationData,
+            ...userServiceResponse?.data?.filter((user: any) => {
+              if (user?._id != userRelation?.participantB) {
+                return true;
+              }
+              return false;
+            })?.[0],
+          });
       }
 
       response.sendSuccessResponse(res, 'CREATED', newUserRelation);
@@ -41,9 +80,9 @@ export const createUserRelation = tryCatchErrorHandler(
 
 export const getUserRelations = tryCatchErrorHandler(
   async (req: JwtRequest, res: Response, next: NextFunction) => {
-    const userId = req?.user?._id;
+    const participantA = req?.user?._id;
     const data = {
-      userId,
+      participantA,
       relationType: req?.query?.relationType,
       page: req?.query?.page,
       limit: req?.query?.limit,
@@ -61,27 +100,28 @@ export const getUserRelations = tryCatchErrorHandler(
 
       let ids: string[] = [];
       let responseData: any = userRelations?.map((relation) => {
-        if (userId == relation?.entityId?.toString()) {
-          ids.push(relation?.userId?.toString());
+        if (participantA == relation?.participantB?.toString()) {
+          ids.push(relation?.participantA?.toString());
         } else {
-          ids.push(relation?.entityId?.toString());
+          ids.push(relation?.participantB?.toString());
         }
 
         let unreadMessages = 0;
         let lastMessage = null;
 
-        if (relation?.unreadMessages?.user == userId) {
+        if (relation?.unreadMessages?.user?.toString() == participantA) {
           unreadMessages = relation?.unreadMessages?.count ?? 0;
         }
 
-        if (relation?.lastMessage?.user == userId) {
+        if (relation?.lastMessage?.user?.toString() == participantA) {
           lastMessage = relation?.lastMessage?.message ?? null;
         }
 
         return {
+          friend_id: ids[ids?.length - 1],
           userRelationId: relation?._id?.toString(),
-          requestSentBy: relation?.userId?.toString(),
-          requestStatus: relation?.status ?? '',
+          requestedBy: relation?.requestedBy,
+          requestStatus: relation?.status,
           unreadMessages,
           lastMessage,
         };
@@ -92,7 +132,16 @@ export const getUserRelations = tryCatchErrorHandler(
       if (userServiceResponse?.success) {
         responseData = userServiceResponse?.data?.map(
           (user: any, index: number) => {
-            return { ...user, ...(responseData[index] ?? {}) };
+            return {
+              ...user,
+              ...(responseData?.filter((relation: any) => {
+                if (user?._id == relation?.friend_id) {
+                  return true;
+                }
+
+                return false;
+              })?.[0] ?? {}),
+            };
           },
         );
 
@@ -108,17 +157,17 @@ export const getUserRelations = tryCatchErrorHandler(
   },
 );
 
-export const deleteUserRelationByEntityId = tryCatchErrorHandler(
+export const deleteUserRelationByParticipantB = tryCatchErrorHandler(
   async (req: JwtRequest, res: Response, next: NextFunction) => {
     const relationType = req?.params?.relationType;
-    const entityId = req?.params?.entityId;
-    const userId = req?.user?._id;
+    const participantB = req?.params?.participantB;
+    const participantA = req?.user?._id;
     try {
       const deletedUserRelation =
         await UserRelationsRepository.deleteUserRelation({
-          userId,
+          participantA,
           relationType,
-          entityId,
+          participantB,
         });
 
       if (!deletedUserRelation) {
@@ -138,18 +187,82 @@ export const deleteUserRelationByEntityId = tryCatchErrorHandler(
   },
 );
 
-export const updateUserRelationByEntityId = tryCatchErrorHandler(
+export const updateUserRelationByParticipantB = tryCatchErrorHandler(
   async (req: JwtRequest, res: Response, next: NextFunction) => {
     const relationType = req?.params?.relationType;
-    const entityId = req?.params?.entityId;
-    const userId = req?.user?._id;
+    const participantB = req?.params?.participantB;
+    const participantA = req?.user?._id;
     const data = req?.body ?? {};
     try {
       const updateUserRelation =
         await UserRelationsRepository.updateUserRelation({
-          userId,
+          participantA,
           relationType,
-          entityId,
+          participantB,
+          ...data,
+        });
+
+      if (!updateUserRelation) {
+        response.sendErrorResponse(
+          res,
+          'BAD_REQUEST',
+          'Unable to delete relation!',
+        );
+        return;
+      }
+
+      response.sendSuccessResponse(res, 'OK', updateUserRelation);
+      return;
+    } catch (error: any) {
+      response.sendErrorResponse(res, 'INTERNAL_SERVER_ERROR', error.message);
+    }
+  },
+);
+
+export const rejectRequest = tryCatchErrorHandler(
+  async (req: JwtRequest, res: Response, next: NextFunction) => {
+    const relationType = req?.params?.relationType;
+    const participantB = req?.params?.participantB;
+    const participantA = req?.user?._id;
+    const data = req?.body ?? {};
+    try {
+      const updateUserRelation =
+        await UserRelationsRepository.updateUserRelation({
+          participantA,
+          relationType,
+          participantB,
+          ...data,
+        });
+
+      if (!updateUserRelation) {
+        response.sendErrorResponse(
+          res,
+          'BAD_REQUEST',
+          'Unable to delete relation!',
+        );
+        return;
+      }
+
+      response.sendSuccessResponse(res, 'OK', updateUserRelation);
+      return;
+    } catch (error: any) {
+      response.sendErrorResponse(res, 'INTERNAL_SERVER_ERROR', error.message);
+    }
+  },
+);
+
+export const acceptRequest = tryCatchErrorHandler(
+  async (req: JwtRequest, res: Response, next: NextFunction) => {
+    const relationType = req?.params?.relationType;
+    const participantB = req?.params?.participantB;
+    const participantA = req?.user?._id;
+    const data = req?.body ?? {};
+    try {
+      const updateUserRelation =
+        await UserRelationsRepository.updateUserRelation({
+          participantA,
+          relationType,
+          participantB,
           ...data,
         });
 

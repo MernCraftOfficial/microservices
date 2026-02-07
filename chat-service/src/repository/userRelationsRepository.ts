@@ -3,24 +3,34 @@ import { UserRelations } from '../model/UserRelations';
 export const createUserRelation = async (data: any) => {
   let status = 'pending';
   const {
-    userId = null,
-    entityId = null,
+    participantA = null,
+    participantB = null,
     relationType = null,
     role = null,
   } = data;
 
-  if (!relationType || !entityId || !userId) {
+  if (!relationType || !participantB || !participantA) {
     return false;
   }
 
-  if (userId == entityId) {
+  if (participantA == participantB) {
     status = 'accepted';
   }
 
+  const mapping = {
+    participantA,
+    participantB,
+  };
+
+  if (participantA < participantB) {
+    mapping.participantA = participantB;
+    mapping.participantB = participantA;
+  }
+
   const UserRelation = {
-    userId: data?.userId,
-    entityId: data?.entityId,
-    relationType: data?.relationType,
+    ...mapping,
+    requestedBy: participantA,
+    relationType: relationType,
     role: role,
     status,
   };
@@ -38,8 +48,8 @@ export const createUserRelation = async (data: any) => {
 export const updateUserRelation = async (data: any) => {
   const {
     relationType = null,
-    entityId = null,
-    userId = null,
+    participantB = null,
+    participantA = null,
     role = null,
     status = null,
   } = data;
@@ -56,14 +66,14 @@ export const updateUserRelation = async (data: any) => {
   if (
     Object.keys(dataToUpdate).length == 0 ||
     !relationType ||
-    !entityId ||
-    !userId
+    !participantB ||
+    !participantA
   ) {
     return false;
   }
 
   const updateUserRelation = await UserRelations.updateOne(
-    { userId, relationType, entityId },
+    { participantA, relationType, participantB },
     { $set: { ...dataToUpdate } },
     { runValidators: true },
   );
@@ -102,19 +112,19 @@ export const updateUserRelationById = async (data: any) => {
 export const getUserRelations = async (data: any) => {
   const {
     relationType = null,
-    userId = null,
+    participantA = null,
     limit = 10,
     page = 0,
     status = null,
   } = data;
 
-  if (!userId) {
+  if (!participantA) {
     return false;
   }
 
   const userRelations = await UserRelations.find({
     ...(relationType ? { relationType } : {}),
-    $or: [{ userId }, { entityId: userId }],
+    $or: [{ participantA: participantA }, { participantB: participantA }],
     ...(status ? { status } : { status: { $ne: 'blocked' } }),
   })
     .sort({ createdAt: -1 })
@@ -129,15 +139,19 @@ export const getUserRelations = async (data: any) => {
 };
 
 export const deleteUserRelation = async (data: any) => {
-  const { relationType = null, entityId = null, userId = null } = data;
+  const {
+    relationType = null,
+    participantB = null,
+    participantA = null,
+  } = data;
 
-  if (!relationType || !entityId || !userId) {
+  if (!relationType || !participantB || !participantA) {
     return false;
   }
 
   const deletedUserRelation = await UserRelations.deleteOne({
-    userId,
-    entityId,
+    participantA,
+    participantB,
     relationType,
   });
 
@@ -149,14 +163,14 @@ export const deleteUserRelation = async (data: any) => {
 };
 
 export const updateUserRelationStatus = async (data: any) => {
-  const { _id = null, status = null, entityId = null } = data;
+  const { _id = null, status = null, participantB = null } = data;
 
-  if (!_id || !status || !entityId) {
+  if (!_id || !status || !participantB) {
     return false;
   }
 
   const updateStatus = await UserRelations.updateOne(
-    { _id, $or: [{ userId: entityId }, { entityId }] },
+    { _id, $or: [{ participantA: participantB }, { participantB }] },
     { $set: { status } },
     { runValidators: true },
   );

@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
 export type MessageType = 'text' | 'image' | 'video' | 'file' | 'audio';
-export type MessageStatus = 'pending' | 'sent' | 'received' | 'read';
+export type MessageStatus = 'sent' | 'delivered' | 'read';
 export type MediaType = {
   url: String; // file URL
   publicId: String; // cloud storage ID
@@ -29,7 +29,7 @@ const MessageSchema = new Schema(
     content: { type: String, required: false, default: null },
     messageStatus: {
       type: String,
-      enum: ['sent', 'received', 'read'],
+      enum: ['sent', 'delivered', 'read'],
       default: 'sent',
     },
 

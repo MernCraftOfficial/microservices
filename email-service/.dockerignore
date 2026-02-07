@@ -1,0 +1,37 @@
+# Dependencies
+
+node_modules
+npm-debug.log
+
+# Environment & secrets
+
+.env
+.env.\*
+
+# Git
+
+.git
+.gitignore
+
+# Editors / IDE
+
+.vscode
+.vs
+
+# Build artifacts
+
+dist
+build
+.next
+.cache
+coverage
+
+# OS junk
+
+.DS_Store
+Thumbs.db
+
+# Documentation
+
+README.md
+LICENSE

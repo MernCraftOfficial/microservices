@@ -1,4 +1,5 @@
 import env from '../config/env';
+import logger from '../config/winston';
 import { requestContext } from '../lib/requestContext';
 type Methods = 'POST' | 'GET' | 'PUT' | 'PATCH' | 'OPTIONS' | 'HEAD' | 'DELETE';
 export interface Response {
@@ -74,7 +75,7 @@ export async function fetchHelper({
       return { ...json_response, errorMessage };
     }
 
-    console.table({ path, options, json_response });
+    logger.info({ path, options, json_response });
     return json_response;
   }
 }

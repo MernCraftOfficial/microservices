@@ -3,6 +3,11 @@ import tryCatchErrorHandler from '../helper/tryCatchHelper';
 import response from '../helper/responseHelper';
 import { JwtRequest } from '../types/commonTypes';
 import MessageRepository from '../repository/messageRepository';
+import { getChatSocketKey } from '../helper/socketHelper';
+import { getChatSocket } from '../sockets/chatSocket';
+import logger from '../config/winston';
+import messageRepository from '../repository/messageRepository';
+import { Message } from '../model/Message';
 
 export const createMessageForReceiver = tryCatchErrorHandler(
   async (req: JwtRequest, res: Response, next: NextFunction) => {
@@ -10,6 +15,8 @@ export const createMessageForReceiver = tryCatchErrorHandler(
     const sender = req?.user?._id;
     let message = req?.body;
     message = { ...message, receiver, sender };
+
+    logger.info('Create Messaage : ', message);
 
     try {
       const newMessage = await MessageRepository.createMessage(message);
@@ -20,6 +27,17 @@ export const createMessageForReceiver = tryCatchErrorHandler(
           'INTERNAL_SERVER_ERROR',
           'Something went wrong!',
         );
+      }
+
+      const chatSocket = getChatSocket();
+      chatSocket
+        .to(getChatSocketKey(sender))
+        .emit('privateMessage', newMessage);
+
+      if (sender != receiver) {
+        chatSocket
+          .to(getChatSocketKey(receiver))
+          .emit('privateMessage', newMessage);
       }
 
       response.sendSuccessResponse(res, 'CREATED', newMessage);
@@ -129,6 +147,83 @@ export const deleteWholeChat = tryCatchErrorHandler(
       }
 
       response.sendSuccessResponse(res, 'OK', deletedMessage);
+      return;
+    } catch (error: any) {
+      response.sendErrorResponse(res, 'INTERNAL_SERVER_ERROR', error.message);
+    }
+  },
+);
+
+export const markMessagesDelivered = tryCatchErrorHandler(
+  async (req: JwtRequest, res: Response, next: NextFunction) => {
+    const receiver = req?.user?._id;
+    const { receivedAt = new Date().toISOString() } = req?.body;
+    try {
+      const updatedMessage = await MessageRepository.markMessagesDelivered(
+        receiver,
+        receivedAt,
+      );
+
+      if (!updatedMessage) {
+        response.sendErrorResponse(
+          res,
+          'BAD_REQUEST',
+          'Unable mark messages delivered!',
+        );
+        return;
+      }
+
+      const senders = await messageRepository.getDistinctSenders(receiver);
+
+      const chatSocket = getChatSocket();
+
+      if (senders) {
+        senders.forEach((sender) => {
+          chatSocket
+            .to(getChatSocketKey(sender?._id?.toString()))
+            .emit('messageStatus', { receiver, messageStatus: 'delivered' });
+        });
+      }
+
+      response.sendSuccessResponse(res, 'OK', updatedMessage);
+      return;
+    } catch (error: any) {
+      response.sendErrorResponse(res, 'INTERNAL_SERVER_ERROR', error.message);
+    }
+  },
+);
+
+export const markMessagesRead = tryCatchErrorHandler(
+  async (req: JwtRequest, res: Response, next: NextFunction) => {
+    const receiver = req?.user?._id;
+    const { sender = null } = req?.body;
+
+    if (!sender) {
+      response.sendErrorResponse(res, 'BAD_REQUEST', 'Sender id is undefined!');
+      return;
+    }
+
+    try {
+      const updatedMessage = await MessageRepository.markMessagesRead({
+        receiver,
+        sender,
+      });
+
+      if (!updatedMessage) {
+        response.sendErrorResponse(
+          res,
+          'BAD_REQUEST',
+          'Unable mark messages read!',
+        );
+        return;
+      }
+
+      const chatSocket = getChatSocket();
+      chatSocket
+        .to(getChatSocketKey(sender))
+        .emit('messageStatus', { receiver, messageStatus: 'read' });
+
+      response.sendSuccessResponse(res, 'OK', updatedMessage);
       return;
     } catch (error: any) {
       response.sendErrorResponse(res, 'INTERNAL_SERVER_ERROR', error.message);

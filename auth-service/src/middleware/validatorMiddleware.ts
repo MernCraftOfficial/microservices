@@ -2,7 +2,7 @@ import joi from 'joi';
 import { Request, Response, NextFunction } from 'express';
 import response from '../helper/responseHelper';
 const signupSchema = joi.object({
-  username: joi.string().min(5).max(15).alphanum().required(),
+  username: joi.string().min(5).max(15).required(),
   email: joi
     .string()
     .email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } })

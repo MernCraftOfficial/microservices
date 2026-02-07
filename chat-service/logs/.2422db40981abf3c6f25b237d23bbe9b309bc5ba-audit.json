@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "C:\\development\\chatting app\\microservices\\chat-service\\logs\\.2422db40981abf3c6f25b237d23bbe9b309bc5ba-audit.json",
+    "files": [
+        {
+            "date": 1769433328321,
+            "name": "C:\\development\\chatting app\\microservices\\chat-service\\logs\\2026-01-26-combined.log",
+            "hash": "e5907cf9b7f382c5760f6a9e01f6d9de7bc5a5ae15e157a1fd5954113378df3e"
+        }
+    ],
+    "hashType": "sha256"
+}

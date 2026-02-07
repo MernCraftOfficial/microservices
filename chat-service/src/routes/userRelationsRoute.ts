@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import {
   createUserRelation,
-  deleteUserRelationByEntityId,
+  deleteUserRelationByParticipantB,
   getUserRelations,
-  updateUserRelationByEntityId,
+  updateUserRelationByParticipantB,
+  rejectRequest,
+  acceptRequest,
 } from '../controller/userRelationsController';
 
 const userRelationRoute = Router();
@@ -12,11 +14,14 @@ userRelationRoute.post('/userRelations', createUserRelation);
 userRelationRoute.get('/userRelations', getUserRelations);
 userRelationRoute.delete(
   '/userRelations/:relationType/:entityId',
-  deleteUserRelationByEntityId,
+  deleteUserRelationByParticipantB,
 );
 userRelationRoute.patch(
   '/userRelations/:relationType/:entityId',
-  updateUserRelationByEntityId,
+  updateUserRelationByParticipantB,
 );
+
+userRelationRoute.patch('/userRelations/block', rejectRequest);
+userRelationRoute.patch('/userRelations/accept', acceptRequest);
 
 export default userRelationRoute;

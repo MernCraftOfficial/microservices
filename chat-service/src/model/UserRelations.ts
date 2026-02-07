@@ -2,17 +2,22 @@ import mongoose from 'mongoose';
 
 const userRelationsSchema = new mongoose.Schema(
   {
-    userId: {
+    participantA: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true, // speeds up lookups by userId
+      index: true, // speeds up lookups by participantA
     },
 
-    entityId: {
+    participantB: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
       index: true, // speeds up reverse lookups (which users belong to group?)
+    },
+
+    requestedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
     },
 
     relationType: {
@@ -28,12 +33,12 @@ const userRelationsSchema = new mongoose.Schema(
     },
 
     unreadMessages: {
-      user: { type: String, default: null },
+      user: { type: mongoose.Schema.Types.ObjectId, default: null },
       count: { type: Number, default: 0 },
     },
 
     lastMessage: {
-      user: { type: String, default: null },
+      user: { type: mongoose.Schema.Types.ObjectId, default: null },
       message: { type: String, default: 0 },
     },
 
@@ -48,10 +53,9 @@ const userRelationsSchema = new mongoose.Schema(
     toJSON: {
       transform(doc, ret: any) {
         // Convert ObjectIds to strings
-        ret.entityId = ret.entityId?.toString();
-        // Remove internal fields
-        delete ret._id;
-        delete ret.userId;
+        ret.participantB = ret.participantB?.toString();
+        ret._id = ret._id?.toString();
+        ret.participantA = ret.participantA?.toString();
         delete ret.__v;
         return ret;
       },
@@ -59,9 +63,9 @@ const userRelationsSchema = new mongoose.Schema(
   },
 );
 
-// Prevent duplicates like (userId + entityId + relationType)
+// Prevent duplicates like (participantA + participantB + relationType)
 userRelationsSchema.index(
-  { userId: 1, entityId: 1, relationType: 1 },
+  { participantA: 1, participantB: 1, relationType: 1 },
   { unique: true },
 );
 
