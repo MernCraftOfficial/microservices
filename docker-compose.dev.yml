@@ -2,7 +2,9 @@ version: "3.9"
 
 services:
   api-gateway:
-    image: ghcr.io/mohitmtnr/uchat-api-gateway:latest
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
     container_name: uchat-api-gateway
     ports:
       - "5000:5000"
@@ -11,9 +13,13 @@ services:
     depends_on:
       - auth-service
       - chat-service
+    volumes:
+      - ./api-gateway:/app
 
   auth-service:
-    image: ghcr.io/mohitmtnr/uchat-auth-service:latest
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
     container_name: uchat-auth-service
     ports:
       - "5001:5001"
@@ -21,19 +27,29 @@ services:
       - ./auth-service/.env.local
     depends_on:
       - email-service
+    volumes:
+      - ./auth-service:/app
 
   chat-service:
-    image: ghcr.io/mohitmtnr/uchat-chat-service:latest
+    build:
+      context: ./chat-service
+      dockerfile: Dockerfile
     container_name: uchat-chat-service
     ports:
       - "5002:5002"
     env_file:
       - ./chat-service/.env.local
+    volumes:
+      - ./chat-service:/app
 
   email-service:
-    image: ghcr.io/mohitmtnr/uchat-email-service:latest
+    build:
+      context: ./email-service
+      dockerfile: Dockerfile
     container_name: uchat-email-service
     ports:
       - "5003:5003"
     env_file:
       - ./email-service/.env.local
+    volumes:
+      - ./email-service:/app
