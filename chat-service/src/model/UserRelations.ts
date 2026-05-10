@@ -33,13 +33,13 @@ const userRelationsSchema = new mongoose.Schema(
     },
 
     unreadMessages: {
-      user: { type: mongoose.Schema.Types.ObjectId, default: null },
-      count: { type: Number, default: 0 },
+      participantA: { type: Number, default: 0 },
+      participantB: { type: Number, default: 0 },
     },
 
     lastMessage: {
-      user: { type: mongoose.Schema.Types.ObjectId, default: null },
-      message: { type: String, default: 0 },
+      participantA: { type: String, default: null },
+      participantB: { type: String, default: null },
     },
 
     role: {

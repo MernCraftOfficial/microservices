@@ -16,7 +16,7 @@ messageRoute.get('/messages/:messageStatus/count', getMessageCountByStatus);
 messageRoute.post('/message/:receiverId', createMessageForReceiver);
 messageRoute.get('/messages/:receiverId', getMessageByReceiverId);
 messageRoute.patch('/message/:messageId', updateMessageById);
-messageRoute.patch('/messages/delivered', markMessagesReceived);
+messageRoute.patch('/messages/received', markMessagesReceived);
 messageRoute.patch('/messages/read', markMessagesRead);
 
 messageRoute.delete('/message/:messageId', deleteMessageById);
