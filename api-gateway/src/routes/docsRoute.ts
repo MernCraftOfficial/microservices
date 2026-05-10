@@ -33,6 +33,7 @@ if (fs.existsSync(docsDir)) {
       `/${serviceName}`,
       apiReference({
         url: `/docs/${serviceName}.json`,
+        showDeveloperTools: "never",
         theme: "purple",
       }),
     );
