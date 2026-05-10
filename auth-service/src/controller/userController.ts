@@ -24,22 +24,14 @@ export const signin = tryCatchErrorHandler(
     const userDetails = await User.findOne({ email: email });
 
     if (!userDetails) {
-      response.sendErrorResponse(
-        res,
-        'NOT_FOUND',
-        'No account found with this email!',
-      );
+      response.sendErrorResponse(res, 'UNAUTHORIZED', 'Invalid credentials!');
       return;
     }
 
     const isPasswordMatched = await userDetails.comparePassword(password);
 
     if (!isPasswordMatched) {
-      response.sendErrorResponse(
-        res,
-        'UNAUTHORIZED',
-        "Password doesn't match!",
-      );
+      response.sendErrorResponse(res, 'UNAUTHORIZED', 'Invalid credentials!');
       return;
     }
     if (!env.BYPASS_VERIFICATION && !userDetails?.isVerified) {

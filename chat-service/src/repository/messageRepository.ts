@@ -1,4 +1,5 @@
-import { Message } from '../model/Message';
+import logger from '../config/winston';
+import { Message, MessageStatus } from '../model/Message';
 
 export const createMessage = async (data: any) => {
   const message = {
@@ -107,7 +108,7 @@ export const markMessagesDelivered = async (
 ) => {
   const markReceived = await Message.updateMany(
     { receiver: receiverId, messageStatus: 'sent' },
-    { $set: { messageStatus: 'delivered', receivedAt } },
+    { $set: { messageStatus: 'received', receivedAt } },
     { runValidators: true },
   );
 
@@ -134,17 +135,42 @@ export const markMessagesRead = async (data: any) => {
   return markReceived;
 };
 
-export const getDistinctSenders = async (receiverId: string) => {
+export const getDistinctSenders = async (
+  receiverId: string,
+  messageStatus: MessageStatus,
+) => {
   const distinctSenders = await Message.distinct('sender', {
     receiver: receiverId,
-    status: 'delivered',
+    messageStatus: messageStatus,
   });
+
+  logger.info(`Sender of ${receiverId}`, distinctSenders);
 
   if (!distinctSenders || distinctSenders?.length == 0) {
     return false;
   }
 
   return distinctSenders;
+};
+
+export const getMessageCountByStatus = async (
+  receiverId: string,
+  status: MessageStatus,
+) => {
+  if (!receiverId || !status) {
+    return false;
+  }
+
+  const messageCount = await Message.countDocuments({
+    messageStatus: status,
+    receiver: receiverId,
+  });
+
+  if (!messageCount) {
+    return false;
+  }
+
+  return messageCount;
 };
 
 export default {
@@ -156,4 +182,5 @@ export default {
   markMessagesDelivered,
   markMessagesRead,
   getDistinctSenders,
+  getMessageCountByStatus,
 };

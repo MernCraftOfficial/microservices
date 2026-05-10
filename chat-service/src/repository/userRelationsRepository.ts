@@ -1,3 +1,4 @@
+import logger from '../config/winston';
 import { UserRelations } from '../model/UserRelations';
 
 export const createUserRelation = async (data: any) => {
@@ -163,14 +164,21 @@ export const deleteUserRelation = async (data: any) => {
 };
 
 export const updateUserRelationStatus = async (data: any) => {
-  const { _id = null, status = null, participantB = null } = data;
+  const { participant1 = null, participant2 = null, status = null } = data;
 
-  if (!_id || !status || !participantB) {
+  logger.info('Relation Status Update : ', data);
+
+  if (!participant1 || !participant2 || !status) {
     return false;
   }
 
   const updateStatus = await UserRelations.updateOne(
-    { _id, $or: [{ participantA: participantB }, { participantB }] },
+    {
+      $or: [
+        { participantA: participant1, participantB: participant2 },
+        { participantA: participant2, participantB: participant1 },
+      ],
+    },
     { $set: { status } },
     { runValidators: true },
   );
@@ -182,10 +190,45 @@ export const updateUserRelationStatus = async (data: any) => {
   return updateStatus;
 };
 
+export const updateLastMessageAndUnreadCount = async (data: any) => {
+  const { receiver = null, sender = null, count = 1, message = null } = data;
+
+  let unreadMessages = null;
+  let lastMessage = null;
+
+  if (receiver < sender) {
+    unreadMessages = { 'unreadMessages.participantA': count };
+    lastMessage = { 'lastMessage.participantA': message };
+  } else {
+    unreadMessages = { 'unreadMessages.participantB': count };
+    lastMessage = { 'lastMessage.participantB': message };
+  }
+
+  const updatedRelation = await UserRelations.updateOne(
+    {
+      $or: [
+        { participantA: receiver, participantB: sender },
+        { participantA: sender, participantB: receiver },
+      ],
+    },
+    {
+      $inc: unreadMessages,
+      $set: lastMessage,
+    },
+  );
+
+  if (!updatedRelation || updatedRelation?.matchedCount == 0) {
+    return false;
+  }
+
+  return updatedRelation;
+};
+
 export default {
   createUserRelation,
   updateUserRelation,
   getUserRelations,
   deleteUserRelation,
   updateUserRelationStatus,
+  updateLastMessageAndUnreadCount,
 };

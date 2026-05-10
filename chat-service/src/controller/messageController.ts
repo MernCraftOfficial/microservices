@@ -7,7 +7,8 @@ import { getChatSocketKey } from '../helper/socketHelper';
 import { getChatSocket } from '../sockets/chatSocket';
 import logger from '../config/winston';
 import messageRepository from '../repository/messageRepository';
-import { Message } from '../model/Message';
+import { Message, MessageStatus } from '../model/Message';
+import userRelationsRepository from '../repository/userRelationsRepository';
 
 export const createMessageForReceiver = tryCatchErrorHandler(
   async (req: JwtRequest, res: Response, next: NextFunction) => {
@@ -28,6 +29,15 @@ export const createMessageForReceiver = tryCatchErrorHandler(
           'Something went wrong!',
         );
       }
+
+      const updateData = {
+        receiver,
+        sender,
+        count: 1,
+        message: message?.content,
+      };
+      const userRelationUpdated =
+        userRelationsRepository.updateLastMessageAndUnreadCount(updateData);
 
       const chatSocket = getChatSocket();
       chatSocket
@@ -154,11 +164,25 @@ export const deleteWholeChat = tryCatchErrorHandler(
   },
 );
 
-export const markMessagesDelivered = tryCatchErrorHandler(
+export const markMessagesReceived = tryCatchErrorHandler(
   async (req: JwtRequest, res: Response, next: NextFunction) => {
     const receiver = req?.user?._id;
     const { receivedAt = new Date().toISOString() } = req?.body;
     try {
+      const senders = await messageRepository.getDistinctSenders(
+        receiver,
+        'sent',
+      );
+
+      if (!senders) {
+        response.sendSuccessResponse(
+          res,
+          'OK',
+          'Messages are already marked received!',
+        );
+        return;
+      }
+
       const updatedMessage = await MessageRepository.markMessagesDelivered(
         receiver,
         receivedAt,
@@ -168,20 +192,20 @@ export const markMessagesDelivered = tryCatchErrorHandler(
         response.sendErrorResponse(
           res,
           'BAD_REQUEST',
-          'Unable mark messages delivered!',
+          'Unable mark messages received!',
         );
         return;
       }
 
-      const senders = await messageRepository.getDistinctSenders(receiver);
-
-      const chatSocket = getChatSocket();
-
       if (senders) {
+        const chatSocket = getChatSocket();
         senders.forEach((sender) => {
           chatSocket
             .to(getChatSocketKey(sender?._id?.toString()))
-            .emit('messageStatus', { receiver, messageStatus: 'delivered' });
+            .emit('messageStatusChanged', {
+              receiver,
+              messageStatus: 'received',
+            });
         });
       }
 
@@ -219,11 +243,36 @@ export const markMessagesRead = tryCatchErrorHandler(
       }
 
       const chatSocket = getChatSocket();
-      chatSocket
-        .to(getChatSocketKey(sender))
-        .emit('messageStatus', { receiver, messageStatus: 'read' });
+      chatSocket.to(getChatSocketKey(sender)).emit('messageStatusChanged', {
+        receiver,
+        messageStatus: 'read',
+      });
 
       response.sendSuccessResponse(res, 'OK', updatedMessage);
+      return;
+    } catch (error: any) {
+      response.sendErrorResponse(res, 'INTERNAL_SERVER_ERROR', error.message);
+    }
+  },
+);
+
+export const getMessageCountByStatus = tryCatchErrorHandler(
+  async (req: JwtRequest, res: Response, next: NextFunction) => {
+    const receiverId = req?.user?._id;
+    const messageStatus = req?.params?.messageStatus;
+
+    if (!messageStatus) {
+      response.sendErrorResponse(res, 'BAD_REQUEST', 'No such message status!');
+      return;
+    }
+
+    try {
+      const messageCount = await MessageRepository.getMessageCountByStatus(
+        receiverId,
+        messageStatus as MessageStatus,
+      );
+
+      response.sendSuccessResponse(res, 'OK', { messageCount });
       return;
     } catch (error: any) {
       response.sendErrorResponse(res, 'INTERNAL_SERVER_ERROR', error.message);

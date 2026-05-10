@@ -11,7 +11,7 @@
   },
   "servers": [
     {
-      "url": "/api/auth",
+      "url": "/api/user",
       "description": "Auth Service Server"
     }
   ],
@@ -44,7 +44,9 @@
                 "example": "Doe"
               }
             },
-            "required": ["firstname"]
+            "required": [
+              "firstname"
+            ]
           },
           "email": {
             "type": "string",
@@ -58,12 +60,22 @@
           },
           "role": {
             "type": "string",
-            "enum": ["super_admin", "admin", "user", "guest"],
+            "enum": [
+              "super_admin",
+              "admin",
+              "user",
+              "guest"
+            ],
             "example": "user"
           },
           "status": {
             "type": "string",
-            "enum": ["active", "busy", "away", "offline"],
+            "enum": [
+              "active",
+              "busy",
+              "away",
+              "offline"
+            ],
             "example": "offline"
           },
           "lastSeen": {
@@ -91,7 +103,10 @@
       },
       "SigninRequest": {
         "type": "object",
-        "required": ["email", "password"],
+        "required": [
+          "email",
+          "password"
+        ],
         "properties": {
           "email": {
             "type": "string",
@@ -108,7 +123,11 @@
       },
       "SignupRequest": {
         "type": "object",
-        "required": ["username", "email", "password"],
+        "required": [
+          "username",
+          "email",
+          "password"
+        ],
         "properties": {
           "username": {
             "type": "string",
@@ -133,7 +152,9 @@
       },
       "ForgotPasswordRequest": {
         "type": "object",
-        "required": ["email"],
+        "required": [
+          "email"
+        ],
         "properties": {
           "email": {
             "type": "string",
@@ -145,7 +166,9 @@
       },
       "ResetPasswordRequest": {
         "type": "object",
-        "required": ["password"],
+        "required": [
+          "password"
+        ],
         "properties": {
           "password": {
             "type": "string",
@@ -161,7 +184,12 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["active", "busy", "away", "offline"],
+            "enum": [
+              "active",
+              "busy",
+              "away",
+              "offline"
+            ],
             "example": "active"
           }
         }
@@ -179,12 +207,19 @@
           },
           "relationType": {
             "type": "string",
-            "enum": ["friend", "block"],
+            "enum": [
+              "friend",
+              "block"
+            ],
             "example": "friend"
           },
           "status": {
             "type": "string",
-            "enum": ["pending", "accepted", "rejected"],
+            "enum": [
+              "pending",
+              "accepted",
+              "rejected"
+            ],
             "example": "accepted"
           }
         }
@@ -198,7 +233,10 @@
           },
           "searchBy": {
             "type": "string",
-            "enum": ["email", "username"],
+            "enum": [
+              "email",
+              "username"
+            ],
             "example": "username"
           }
         }
@@ -250,7 +288,10 @@
             ]
           }
         },
-        "required": ["success", "message"]
+        "required": [
+          "success",
+          "message"
+        ]
       },
       "ErrorResponse": {
         "type": "object",
@@ -268,7 +309,10 @@
             "example": "NOT_FOUND"
           }
         },
-        "required": ["success", "message"]
+        "required": [
+          "success",
+          "message"
+        ]
       }
     }
   },
@@ -288,7 +332,9 @@
       "post": {
         "summary": "User Sign In",
         "description": "Authenticate a user with email and password",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -350,7 +396,9 @@
       "post": {
         "summary": "User Sign Up",
         "description": "Register a new user account",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -409,7 +457,9 @@
       "patch": {
         "summary": "Verify Account",
         "description": "Verify user account using OTP/crypto token",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "security": [],
         "responses": {
           "200": {
@@ -435,7 +485,9 @@
       "post": {
         "summary": "Forgot Password",
         "description": "Initiate password reset process for a verified user",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -477,7 +529,9 @@
       "post": {
         "summary": "Verify OTP",
         "description": "Verify OTP for password reset or account verification",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "security": [],
         "responses": {
           "200": {
@@ -503,7 +557,9 @@
       "get": {
         "summary": "Resend OTP",
         "description": "Resend verification or reset OTP to user's email",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "security": [],
         "responses": {
           "200": {
@@ -533,7 +589,9 @@
       "patch": {
         "summary": "Reset Password",
         "description": "Reset user password after OTP verification",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -575,7 +633,9 @@
       "get": {
         "summary": "Search Users",
         "description": "Search users by email or username",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -597,7 +657,10 @@
             "required": true,
             "schema": {
               "type": "string",
-              "enum": ["email", "username"]
+              "enum": [
+                "email",
+                "username"
+              ]
             },
             "description": "Field to search by"
           }
@@ -644,7 +707,9 @@
       "post": {
         "summary": "Sign Out",
         "description": "Sign out current user and clear authentication cookies",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -681,7 +746,9 @@
       "get": {
         "summary": "Get Current User",
         "description": "Retrieve the authenticated user's profile information",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -733,7 +800,9 @@
       "get": {
         "summary": "Get Users by IDs",
         "description": "Retrieve multiple users by their IDs",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -802,7 +871,9 @@
       "get": {
         "summary": "Get User by ID",
         "description": "Retrieve a specific user's profile by user ID",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -866,7 +937,9 @@
       "post": {
         "summary": "Update User",
         "description": "Update user profile information",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -904,11 +977,21 @@
                   },
                   "role": {
                     "type": "string",
-                    "enum": ["super_admin", "admin", "user", "guest"]
+                    "enum": [
+                      "super_admin",
+                      "admin",
+                      "user",
+                      "guest"
+                    ]
                   },
                   "status": {
                     "type": "string",
-                    "enum": ["active", "busy", "away", "offline"]
+                    "enum": [
+                      "active",
+                      "busy",
+                      "away",
+                      "offline"
+                    ]
                   },
                   "language": {
                     "type": "string"
