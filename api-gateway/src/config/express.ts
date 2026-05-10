@@ -7,13 +7,13 @@ import express, {
   Request,
 } from "express";
 import cors from "cors";
-
 import cookiParser from "cookie-parser";
 import env from "./env";
 import pageNotFound from "./404";
 import { syntaxErrorHandler } from "../middleware/errorHandlerMiddleware";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import authenticate from "../middleware/jwtMiddleware";
+import docRoute from "../routes/docsRoute";
 
 let app: null | Express = null;
 export function getExpressApp() {
@@ -41,13 +41,14 @@ export function includeExpressMiddleware(app: Express) {
         callback(new Error("Not allowed by CORS"));
       },
       credentials: true,
-    })
+    }),
   );
   app.options("/{*any}", cors());
-  app.use(authenticate);
+  app.use("/api", authenticate);
 }
 
 export function includeExpressRoutes(app: Express) {
+  app.use("/docs", docRoute);
   app.use(
     "/api/user",
     createProxyMiddleware({
@@ -56,7 +57,7 @@ export function includeExpressRoutes(app: Express) {
       pathRewrite: {
         "/": "/user/",
       },
-    })
+    }),
   );
 
   app.use(
@@ -67,7 +68,7 @@ export function includeExpressRoutes(app: Express) {
       pathRewrite: {
         "/": "/chat/",
       },
-    })
+    }),
   );
 
   app.all("/{*any}", pageNotFound);

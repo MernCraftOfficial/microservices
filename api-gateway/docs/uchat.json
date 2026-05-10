@@ -1,0 +1,699 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Chat Service API",
+    "version": "1.0.0",
+    "description": "Chat and Messaging Service",
+    "contact": {
+      "name": "API Support",
+      "email": "support@example.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "/api/chat",
+      "description": "Chat Service Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Authorization header using the Bearer scheme"
+      }
+    },
+    "schemas": {
+      "Message": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "content": {
+            "type": "string",
+            "example": "Hello, how are you?"
+          },
+          "senderId": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "receiverId": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439012"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "sent",
+              "received",
+              "read"
+            ],
+            "example": "sent"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Error message"
+          },
+          "error": {
+            "type": "string",
+            "example": "Error code"
+          }
+        },
+        "required": [
+          "success",
+          "message"
+        ]
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Messages",
+      "description": "Message management endpoints"
+    },
+    {
+      "name": "Chat",
+      "description": "Chat endpoints"
+    }
+  ],
+  "paths": {
+    "/messages/{messageStatus}/count": {
+      "get": {
+        "summary": "Get message count by status",
+        "description": "Get count of messages by status (sent, received, read)",
+        "tags": [
+          "Messages"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "messageStatus",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "sent",
+                "received",
+                "read"
+              ]
+            },
+            "description": "Message status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message count",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "number",
+                          "example": 42
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/message/{receiverId}": {
+      "post": {
+        "summary": "Send message to receiver",
+        "description": "Create and send a new message to a specific user",
+        "tags": [
+          "Messages"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "receiverId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Receiver user ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "content"
+                ],
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "example": "Hello, how are you?"
+                  },
+                  "attachment": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Optional attachment URL"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Message sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Message"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/messages/{receiverId}": {
+      "get": {
+        "summary": "Get messages by receiver",
+        "description": "Retrieve all messages between authenticated user and receiver",
+        "tags": [
+          "Messages"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "receiverId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Receiver user ID"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            },
+            "description": "Number of messages to return"
+          },
+          {
+            "in": "query",
+            "name": "before",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Message ID to load messages before (pagination)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Message"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/message/{messageId}": {
+      "patch": {
+        "summary": "Update message",
+        "description": "Update a message's content",
+        "tags": [
+          "Messages"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "messageId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Message ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "example": "Updated message content"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message updated"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Message not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete message by ID",
+        "description": "Delete a specific message",
+        "tags": [
+          "Messages"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "messageId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Message ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message deleted"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Message not found"
+          }
+        }
+      }
+    },
+    "/messages/received": {
+      "patch": {
+        "summary": "Mark messages as received",
+        "description": "Mark all messages as received",
+        "tags": [
+          "Messages"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Messages marked as received"
+          }
+        }
+      }
+    },
+    "/messages/read": {
+      "patch": {
+        "summary": "Mark messages as read",
+        "description": "Mark all messages as read",
+        "tags": [
+          "Messages"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Messages marked as read"
+          }
+        }
+      }
+    },
+    "/{receiverId}": {
+      "delete": {
+        "summary": "Delete entire chat",
+        "description": "Delete all messages with a specific user",
+        "tags": [
+          "Messages"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "receiverId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Receiver user ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chat deleted"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/userRelations": {
+      "post": {
+        "summary": "Create user relation",
+        "description": "Create a relation between users (friend, block, etc.)",
+        "tags": [
+          "Chat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "participantA",
+                  "participantB"
+                ],
+                "properties": {
+                  "participantA": {
+                    "type": "string",
+                    "example": "507f1f77bcf86cd799439011"
+                  },
+                  "participantB": {
+                    "type": "string",
+                    "example": "507f1f77bcf86cd799439012"
+                  },
+                  "relationType": {
+                    "type": "string",
+                    "enum": [
+                      "friend",
+                      "block"
+                    ],
+                    "example": "friend"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Relation created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "get": {
+        "summary": "Get user relations",
+        "description": "Get all relations for the authenticated user",
+        "tags": [
+          "Chat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "relationType",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "friend",
+                "block"
+              ]
+            },
+            "description": "Filter by relation type"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of relations"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/userRelations/{relationType}/{entityId}": {
+      "delete": {
+        "summary": "Delete user relation",
+        "description": "Remove a user relation",
+        "tags": [
+          "Chat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "relationType",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "friend",
+                "block"
+              ]
+            }
+          },
+          {
+            "in": "path",
+            "name": "entityId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Relation deleted"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update user relation",
+        "description": "Update a user relation",
+        "tags": [
+          "Chat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "relationType",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "friend",
+                "block"
+              ]
+            }
+          },
+          {
+            "in": "path",
+            "name": "entityId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "accepted",
+                      "rejected"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Relation updated"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/userRelations/block": {
+      "patch": {
+        "summary": "Block user",
+        "description": "Block a user",
+        "tags": [
+          "Chat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User blocked"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/userRelations/accept": {
+      "patch": {
+        "summary": "Accept request",
+        "description": "Accept a friend request",
+        "tags": [
+          "Chat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request accepted"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    }
+  }
+}

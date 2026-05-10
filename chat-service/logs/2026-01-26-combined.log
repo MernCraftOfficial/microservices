@@ -1,9 +1,0 @@
-[18:46:30] [32minfo[39m: Create Messaage :  {"service":"chat-service","content":"get out","receiver":"69353baad8d4b5d81c7a01c6","messageType":"text","createdAt":"2026-01-26T13:16:30.855Z","sender":"693402a8fcb594ed05b70460"}
-[18:57:19] info: Create Messaage :  {"service":"chat-service","content":"does this work","receiver":"693402a8fcb594ed05b70460","messageType":"text","createdAt":"2026-01-26T13:27:19.734Z","sender":"693402a8fcb594ed05b70460"}
-[18:57:27] info: Create Messaage :  {"service":"chat-service","content":"this works fine","receiver":"693402a8fcb594ed05b70460","messageType":"text","createdAt":"2026-01-26T13:27:27.632Z","sender":"693402a8fcb594ed05b70460"}
-[18:57:35] info: Create Messaage :  {"service":"chat-service","content":"but how","receiver":"693402a8fcb594ed05b70460","messageType":"text","createdAt":"2026-01-26T13:27:35.408Z","sender":"693402a8fcb594ed05b70460"}
-[18:57:46] info: Create Messaage :  {"service":"chat-service","content":"this does not work","receiver":"69353baad8d4b5d81c7a01c6","messageType":"text","createdAt":"2026-01-26T13:27:46.114Z","sender":"693402a8fcb594ed05b70460"}
-[18:58:51] info: Create Messaage :  {"service":"chat-service","content":"it works fine","receiver":"693402a8fcb594ed05b70460","messageType":"text","createdAt":"2026-01-26T13:28:51.190Z","sender":"693402a8fcb594ed05b70460"}
-[18:59:59] info: Create Messaage :  {"service":"chat-service","content":"hey there","receiver":"69353baad8d4b5d81c7a01c6","messageType":"text","createdAt":"2026-01-26T13:29:59.542Z","sender":"693402a8fcb594ed05b70460"}
-[19:05:36] info: Create Messaage :  {"service":"chat-service","content":"does this work now","receiver":"69353baad8d4b5d81c7a01c6","messageType":"text","createdAt":"2026-01-26T13:35:36.502Z","sender":"693402a8fcb594ed05b70460"}
-[21:20:09] info: [object Object] {"service":"chat-service"}

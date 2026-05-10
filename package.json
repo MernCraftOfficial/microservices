@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "dev": "concurrently \"cd auth-service && npm run dev\" \"cd chat-service && npm run dev\" \"cd api-gateway && npm run dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
