@@ -1,4 +1,17 @@
-**/build/
+# Dependencies
 **/node_modules/
-**/dist
-**/logs
+
+# Build outputs
+**/build/
+**/dist/
+
+# Logs
+**/logs/
+*.log
+
+# Environment files
+**/.env
+**/.env.*
+
+# Track template env
+!.env.example
