@@ -54,8 +54,17 @@ export function includeExpressRoutes(app: Express) {
     createProxyMiddleware({
       target: env.AUTH_SERVICE,
       changeOrigin: true,
-      pathRewrite: {
-        "/": "/user/",
+      pathRewrite: (path, req) => {
+        // Rewrite rules
+        if (path.startsWith("/api/user/auth")) {
+          return path.replace("/", "/auth");
+        }
+
+        if (path.startsWith("/api/user")) {
+          return path.replace("/api/user", "/user");
+        }
+
+        return path;
       },
     }),
   );

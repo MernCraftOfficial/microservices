@@ -5,6 +5,7 @@ import cookiParser from 'cookie-parser';
 import env from './env';
 import pageNotFound from './404';
 import { syntaxErrorHandler } from '../middleware/errorHandlerMiddleware';
+import socialAuthRoute from '../routes/socialAuthRoute';
 
 let app: null | Express = null;
 export function getExpressApp() {
@@ -25,7 +26,7 @@ export function includeExpressMiddleware(app: Express) {
 
 export function includeExpressRoutes(app: Express) {
   app.use('/user', userRoute);
-
+  app.use('/auth', socialAuthRoute);
   //404 route
   app.all('/{*any}', pageNotFound);
 }
