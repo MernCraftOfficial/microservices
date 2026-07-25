@@ -55,16 +55,14 @@ export function includeExpressRoutes(app: Express) {
       target: env.AUTH_SERVICE,
       changeOrigin: true,
       pathRewrite: (path, req) => {
+        console.log("Inside it MOHIT", path);
+
         // Rewrite rules
-        if (path.startsWith("/api/user/auth")) {
-          return path.replace("/", "/auth");
+        if (path.startsWith("/auth")) {
+          return path;
         }
 
-        if (path.startsWith("/api/user")) {
-          return path.replace("/api/user", "/user");
-        }
-
-        return path;
+        return `/user${path}`;
       },
     }),
   );
