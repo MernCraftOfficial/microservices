@@ -53,24 +53,30 @@ export const createUserRelation: any = tryCatchErrorHandler(
           .to(getChatSocketKey(userRelation?.participantA))
           .emit('friendRequest', {
             ...userServiceResponse?.data?.filter((user: any) => {
-              if (user?._id != userRelation?.participantA) {
+              if (
+                user?._id != userRelation?.participantA ||
+                userRelation?.participantA == userRelation?.participantB
+              ) {
                 return true;
               }
               return false;
             })?.[0],
             ...relationData,
           });
-        chatSocket
-          .to(getChatSocketKey(userRelation?.participantB))
-          .emit('friendRequest', {
-            ...relationData,
-            ...userServiceResponse?.data?.filter((user: any) => {
-              if (user?._id != userRelation?.participantB) {
-                return true;
-              }
-              return false;
-            })?.[0],
-          });
+
+        if (userRelation?.participantA != userRelation?.participantB) {
+          chatSocket
+            .to(getChatSocketKey(userRelation?.participantB))
+            .emit('friendRequest', {
+              ...relationData,
+              ...userServiceResponse?.data?.filter((user: any) => {
+                if (user?._id != userRelation?.participantB) {
+                  return true;
+                }
+                return false;
+              })?.[0],
+            });
+        }
       }
 
       response.sendSuccessResponse(res, 'CREATED', newUserRelation);

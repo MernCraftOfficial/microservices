@@ -15,7 +15,7 @@ async function init() {
   const app = getExpressApp();
 
   //connect to redis
-  const redis = getRedisClient();
+  // const redis = getRedisClient();
 
   //middlewares
   includeExpressMiddleware(app);

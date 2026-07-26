@@ -1,11 +1,6 @@
 import { Namespace, Socket } from 'socket.io';
 import { createSocketNamespace } from '../config/socket';
-import messageRepository, {
-  createMessage,
-  updateMessage,
-} from '../repository/messageRepository';
 import authenticate from '../middleware/socketMiddlware';
-import userRelationsRepository from '../repository/userRelationsRepository';
 import { getChatSocketKey } from '../helper/socketHelper';
 let chatSocketNamespace: Namespace | null = null;
 export function initChatSocket() {
