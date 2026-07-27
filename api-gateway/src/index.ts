@@ -3,7 +3,7 @@ import {
   startExpressAppServer,
   includeExpressMiddleware,
   includeExpressRoutes,
-} from "./config/express";
+} from "./configs/express.config";
 
 async function init() {
   //express app instance

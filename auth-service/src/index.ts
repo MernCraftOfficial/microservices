@@ -3,9 +3,9 @@ import {
   startExpressAppServer,
   includeExpressMiddleware,
   includeExpressRoutes,
-} from './config/express';
-import { connectToMongoDb } from './config/db';
-import { getRedisClient } from './config/redis';
+} from './configs/express.config';
+import { connectToMongoDb } from './configs/db.config';
+import { getRedisClient } from './configs/redis.config';
 
 async function init() {
   //db connection

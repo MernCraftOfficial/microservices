@@ -2,12 +2,12 @@ import {
   getExpressApp,
   includeExpressMiddleware,
   includeExpressRoutes,
-} from './config/express';
+} from './configs/express.config';
 
-import { initChatSocket } from './sockets/chatSocket';
-import { connectToMongoDb } from './config/db';
-import { getRedisClient } from './config/redis';
-import { startHttpServer } from './config/http';
+import { initChatSocket } from './sockets/chat.socket';
+import { connectToMongoDb } from './configs/db.config';
+import { getRedisClient } from './configs/redis.config';
+import { startHttpServer } from './configs/http.config';
 
 async function init() {
   //db connection
