@@ -2,13 +2,7 @@ import { NextFunction, Response } from 'express';
 import tryCatchErrorHandler from '../helpers/try-catch.helper';
 import response from '../helpers/response.helper';
 import { JwtRequest } from '../types/common.type';
-import MessageRepository from '../repositories/message.repository';
-import { getChatSocketKey } from '../helpers/socket.helper';
-import { getChatSocket } from '../sockets/chat.socket';
-import logger from '../configs/winston.config';
-import messageRepository from '../repositories/message.repository';
-import { Message, MessageStatus } from '../models/message.model';
-import userRelationsRepository from '../repositories/user-relations.repository';
+import { MessageStatus } from '../models/message.model';
 import messageService from '../services/message.service';
 import userRelationService from '../services/user-relations.service';
 
@@ -16,48 +10,16 @@ export const createMessageForReceiver = tryCatchErrorHandler(
   async (req: JwtRequest, res: Response, next: NextFunction) => {
     const receiver = req?.params?.receiverId;
     const sender = req?.user?._id;
-    let message = req?.body;
-    message = { ...message, receiver, sender };
+    const message = req?.body;
 
-    logger.info('Create Messaage : ', message);
+    const newMessage = await messageService.createMessageForReceiver(
+      receiver,
+      sender,
+      message,
+    );
 
-    try {
-      const newMessage = await MessageRepository.createMessage(message);
-
-      if (!newMessage) {
-        response.sendErrorResponse(
-          res,
-          'INTERNAL_SERVER_ERROR',
-          'Something went wrong!',
-        );
-      }
-
-      const updateData = {
-        receiver,
-        sender,
-        count: 1,
-        message: message?.content,
-      };
-      const userRelationUpdated =
-        userRelationsRepository.updateLastMessageAndUnreadCount(updateData);
-
-      const chatSocket = getChatSocket();
-      chatSocket
-        .to(getChatSocketKey(sender))
-        .emit('privateMessage', newMessage);
-
-      if (sender != receiver) {
-        chatSocket
-          .to(getChatSocketKey(receiver))
-          .emit('privateMessage', newMessage);
-      }
-
-      response.sendSuccessResponse(res, 'CREATED', newMessage);
-      return;
-    } catch (error: any) {
-      response.sendErrorResponse(res, 'BAD_REQUEST', error.message);
-      return;
-    }
+    response.sendSuccessResponse(res, 'CREATED', newMessage);
+    return;
   },
 );
 
@@ -65,27 +27,18 @@ export const getMessageByReceiverId = tryCatchErrorHandler(
   async (req: JwtRequest, res: Response, next: NextFunction) => {
     const receiver = req?.params?.receiverId;
     const sender = req?.user?._id;
-    const data = {
+    const page = req?.query?.page;
+    const limit = req?.query?.limit;
+
+    const messages = await messageService.getMessageByReceiverId(
       receiver,
       sender,
-      page: req?.query?.page,
-      limit: req?.query?.limit,
-    };
+      page,
+      limit,
+    );
 
-    try {
-      const messages = await MessageRepository.getMessages(data);
-
-      if (!messages) {
-        response.sendErrorResponse(res, 'NOT_FOUND', 'No message found!');
-        return;
-      }
-
-      response.sendSuccessResponse(res, 'OK', messages);
-      return;
-    } catch (error: any) {
-      response.sendErrorResponse(res, 'BAD_REQUEST', error.message);
-      return;
-    }
+    response.sendSuccessResponse(res, 'OK', messages);
+    return;
   },
 );
 
@@ -93,24 +46,14 @@ export const updateMessageById = tryCatchErrorHandler(
   async (req: JwtRequest, res: Response, next: NextFunction) => {
     const dataToUpdate = req?.body;
     const messageId = req?.params?.messageId;
-    const data = { _id: messageId, dataToUpdate };
-    try {
-      const updatedMessage = await MessageRepository.updateMessage(data);
 
-      if (!updatedMessage) {
-        response.sendErrorResponse(
-          res,
-          'BAD_REQUEST',
-          'Unable to update message!',
-        );
-        return;
-      }
+    const updatedMessage = await messageService.updateMessageById(
+      messageId,
+      dataToUpdate,
+    );
 
-      response.sendSuccessResponse(res, 'OK', updatedMessage);
-      return;
-    } catch (error: any) {
-      response.sendErrorResponse(res, 'INTERNAL_SERVER_ERROR', error.message);
-    }
+    response.sendSuccessResponse(res, 'OK', updatedMessage);
+    return;
   },
 );
 
