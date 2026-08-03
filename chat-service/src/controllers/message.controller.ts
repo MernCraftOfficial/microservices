@@ -10,6 +10,7 @@ import messageRepository from '../repositories/message.repository';
 import { Message, MessageStatus } from '../models/message.model';
 import userRelationsRepository from '../repositories/user-relations.repository';
 import messageService from '../services/message.service';
+import userRelationService from '../services/user-relations.service';
 
 export const createMessageForReceiver = tryCatchErrorHandler(
   async (req: JwtRequest, res: Response, next: NextFunction) => {
@@ -117,25 +118,16 @@ export const deleteMessageById = tryCatchErrorHandler(
   async (req: JwtRequest, res: Response, next: NextFunction) => {
     const _id = req?.params?.messageId;
     const sender = req?.user?._id;
-    try {
-      const deletedMessage = await MessageRepository.deleteMessageById({
-        sender,
-        _id,
-      });
-      if (!deletedMessage) {
-        response.sendErrorResponse(
-          res,
-          'BAD_REQUEST',
-          'Unable to delete message!',
-        );
-        return;
-      }
 
-      response.sendSuccessResponse(res, 'OK', deletedMessage);
+    if (!_id) {
+      response.sendErrorResponse(res, 'BAD_REQUEST');
       return;
-    } catch (error: any) {
-      response.sendErrorResponse(res, 'INTERNAL_SERVER_ERROR', error.message);
     }
+
+    const deletedMessage = await messageService.deleteMessageById(sender, _id);
+
+    response.sendSuccessResponse(res, 'OK', deletedMessage);
+    return;
   },
 );
 
@@ -143,25 +135,13 @@ export const deleteWholeChat = tryCatchErrorHandler(
   async (req: JwtRequest, res: Response, next: NextFunction) => {
     const sender = req?.user?._id;
     const receiver = req?.params?.receiverId;
-    try {
-      const deletedMessage = await MessageRepository.deleteWholeChat({
-        sender,
-        receiver,
-      });
-      if (!deletedMessage) {
-        response.sendErrorResponse(
-          res,
-          'BAD_REQUEST',
-          'Unable to delete chat!',
-        );
-        return;
-      }
+    const deletedMessage = await messageService.deleteWholeChat(
+      receiver,
+      sender,
+    );
 
-      response.sendSuccessResponse(res, 'OK', deletedMessage);
-      return;
-    } catch (error: any) {
-      response.sendErrorResponse(res, 'INTERNAL_SERVER_ERROR', error.message);
-    }
+    response.sendSuccessResponse(res, 'OK', deletedMessage);
+    return;
   },
 );
 
@@ -169,52 +149,14 @@ export const markMessagesReceived = tryCatchErrorHandler(
   async (req: JwtRequest, res: Response, next: NextFunction) => {
     const receiver = req?.user?._id;
     const { receivedAt = new Date().toISOString() } = req?.body;
-    try {
-      const senders = await messageRepository.getDistinctSenders(
-        receiver,
-        'sent',
-      );
 
-      if (!senders) {
-        response.sendSuccessResponse(
-          res,
-          'OK',
-          'Messages are already marked received!',
-        );
-        return;
-      }
+    const updatedMessage = await messageService.markMessagesReceived(
+      receiver,
+      receivedAt,
+    );
 
-      const updatedMessage = await MessageRepository.markMessagesDelivered(
-        receiver,
-        receivedAt,
-      );
-
-      if (!updatedMessage) {
-        response.sendErrorResponse(
-          res,
-          'BAD_REQUEST',
-          'Unable mark messages received!',
-        );
-        return;
-      }
-
-      if (senders) {
-        const chatSocket = getChatSocket();
-        senders.forEach((sender) => {
-          chatSocket
-            .to(getChatSocketKey(sender?._id?.toString()))
-            .emit('messageStatusChanged', {
-              receiver,
-              messageStatus: 'received',
-            });
-        });
-      }
-
-      response.sendSuccessResponse(res, 'OK', updatedMessage);
-      return;
-    } catch (error: any) {
-      response.sendErrorResponse(res, 'INTERNAL_SERVER_ERROR', error.message);
-    }
+    response.sendSuccessResponse(res, 'OK', updatedMessage);
+    return;
   },
 );
 
@@ -229,6 +171,7 @@ export const markMessagesRead = tryCatchErrorHandler(
     }
 
     const updatedMessage = await messageService.readMessage(receiver, sender);
+    await userRelationService.resetUnreadCount(receiver, sender);
 
     response.sendSuccessResponse(res, 'OK', updatedMessage);
     return;
@@ -245,16 +188,12 @@ export const getMessageCountByStatus = tryCatchErrorHandler(
       return;
     }
 
-    try {
-      const messageCount = await MessageRepository.getMessageCountByStatus(
-        receiverId,
-        messageStatus as MessageStatus,
-      );
+    const messageCount = await messageService.getMessageCountByStatus(
+      receiverId,
+      messageStatus as MessageStatus,
+    );
 
-      response.sendSuccessResponse(res, 'OK', { messageCount });
-      return;
-    } catch (error: any) {
-      response.sendErrorResponse(res, 'INTERNAL_SERVER_ERROR', error.message);
-    }
+    response.sendSuccessResponse(res, 'OK', { messageCount });
+    return;
   },
 );

@@ -1,5 +1,6 @@
 import chatSocket from '../sockets/chat.socket';
 import { getChatSocketKey } from '../helpers/socket.helper';
+import { MessageStatus } from '../models/message.model';
 
 class SocketService {
   public emitMessageStatusChanged({
@@ -9,7 +10,7 @@ class SocketService {
   }: {
     sender: string;
     receiver: string;
-    messageStatus: 'sent' | 'delivered' | 'read';
+    messageStatus: MessageStatus;
   }) {
     const socketNamespace = chatSocket.getNamespace();
 
@@ -21,5 +22,5 @@ class SocketService {
 }
 
 const socketService = new SocketService();
-
+export { SocketService };
 export default socketService;
