@@ -3,7 +3,7 @@ import tryCatchErrorHandler from '../helpers/try-catch.helper';
 import response from '../helpers/response.helper';
 import { JwtRequest } from '../types/common.type';
 import UserRelationsRepository from '../repositories/user-relations.repository';
-import userService from '../services/user.service';
+import userClient from '../clients/user.client';
 import { getChatSocket } from '../sockets/chat.socket';
 import { getChatSocketKey } from '../helpers/socket.helper';
 import logger from '../configs/winston.config';
@@ -34,12 +34,12 @@ export const createUserRelation: any = tryCatchErrorHandler(
         return;
       }
 
-      const userServiceResponse = await userService.getFriendsDataByIds([
+      const userClientResponse = await userClient.getFriendsDataByIds([
         userRelation?.participantA,
         userRelation?.participantB,
       ]);
 
-      logger.info('createUserRelation : ', userServiceResponse);
+      logger.info('createUserRelation : ', userClientResponse);
 
       const relationData = {
         relationId: newUserRelation?._id,
@@ -47,12 +47,12 @@ export const createUserRelation: any = tryCatchErrorHandler(
         requestStatus: newUserRelation?.status,
       };
 
-      if (userServiceResponse.success) {
+      if (userClientResponse.success) {
         const chatSocket = getChatSocket();
         chatSocket
           .to(getChatSocketKey(userRelation?.participantA))
           .emit('friendRequest', {
-            ...userServiceResponse?.data?.filter((user: any) => {
+            ...userClientResponse?.data?.filter((user: any) => {
               if (
                 user?._id != userRelation?.participantA ||
                 userRelation?.participantA == userRelation?.participantB
@@ -69,7 +69,7 @@ export const createUserRelation: any = tryCatchErrorHandler(
             .to(getChatSocketKey(userRelation?.participantB))
             .emit('friendRequest', {
               ...relationData,
-              ...userServiceResponse?.data?.filter((user: any) => {
+              ...userClientResponse?.data?.filter((user: any) => {
                 if (user?._id != userRelation?.participantB) {
                   return true;
                 }
@@ -133,10 +133,10 @@ export const getUserRelations = tryCatchErrorHandler(
         };
       });
 
-      const userServiceResponse = await userService.getFriendsDataByIds(ids);
+      const userClientResponse = await userClient.getFriendsDataByIds(ids);
 
-      if (userServiceResponse?.success) {
-        responseData = userServiceResponse?.data?.map(
+      if (userClientResponse?.success) {
+        responseData = userClientResponse?.data?.map(
           (user: any, index: number) => {
             return {
               ...user,

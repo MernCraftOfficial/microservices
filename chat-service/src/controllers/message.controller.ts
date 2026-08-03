@@ -9,6 +9,7 @@ import logger from '../configs/winston.config';
 import messageRepository from '../repositories/message.repository';
 import { Message, MessageStatus } from '../models/message.model';
 import userRelationsRepository from '../repositories/user-relations.repository';
+import messageService from '../services/message.service';
 
 export const createMessageForReceiver = tryCatchErrorHandler(
   async (req: JwtRequest, res: Response, next: NextFunction) => {
@@ -227,32 +228,10 @@ export const markMessagesRead = tryCatchErrorHandler(
       return;
     }
 
-    try {
-      const updatedMessage = await MessageRepository.markMessagesRead({
-        receiver,
-        sender,
-      });
+    const updatedMessage = await messageService.readMessage(receiver, sender);
 
-      if (!updatedMessage) {
-        response.sendErrorResponse(
-          res,
-          'BAD_REQUEST',
-          'Unable mark messages read!',
-        );
-        return;
-      }
-
-      const chatSocket = getChatSocket();
-      chatSocket.to(getChatSocketKey(sender)).emit('messageStatusChanged', {
-        receiver,
-        messageStatus: 'read',
-      });
-
-      response.sendSuccessResponse(res, 'OK', updatedMessage);
-      return;
-    } catch (error: any) {
-      response.sendErrorResponse(res, 'INTERNAL_SERVER_ERROR', error.message);
-    }
+    response.sendSuccessResponse(res, 'OK', updatedMessage);
+    return;
   },
 );
 
